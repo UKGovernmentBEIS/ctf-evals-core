@@ -1,13 +1,13 @@
 from pathlib import Path
 from textwrap import dedent
 
-from dataset import create_dataset, filter_dataset_by_variant
+from .dataset import create_dataset, filter_dataset_by_variant
 from inspect_ai import Task
 from inspect_ai.scorer import includes
 from inspect_ai.solver import Solver, basic_agent, solver, system_message
 from inspect_ai.tool import bash, python
 
-CHALLENGES_DIR = Path(__file__).parent / "challenges"
+import traceback
 
 
 def make_ctf_task(
@@ -16,25 +16,31 @@ def make_ctf_task(
     agent: Solver | None = None,
     max_attempts: int = 3,
     max_messages: int = 15,
+    default_challenge_dir: str | None = None,
 ) -> Task:
     """
     Create a task for a directory of challenges.
     Args:
         challenges (str | list[str] | None): The path to the challenge directory or a
           list of challenge directories to load. Relative paths are resolved relative to
-          the challenges directory. If None, all challenges are loaded.
+          the challenges directory. If None, all challenges are loaded from default_challenge_dir
+          or the directory challenges relative to the calling file.
         variants (str | list[str] | None): The variant or list of variants to include
           (e.g. "easy" or "easy,hard"). If None, all variants are included.
         agent (Solver | None): The solver to use. If None, the default solver is used.
         max_attempts (int): The maximum number of submission attempts before
           terminating. This argument is ignored if `agent` is provided.
         max_messages (int): The maximum number of messages in the conversation.
+        default_challenge_dir (str | None): The default challenge directory to use if no challenges are specified.
     """
+    task_file_path = default_challenge_dir or traceback.extract_stack()[-2].filename
 
     def get_challenge_dir_paths() -> list[Path]:
         # If no challenges are specified, use the default challenge directory.
         if challenges is None:
-            return [CHALLENGES_DIR]
+            print(task_file_path)
+            challenges_dir = Path(task_file_path).parent / "challenges"
+            return [challenges_dir]
         if isinstance(challenges, str):
             return [_make_absolute(challenges)]
         return [_make_absolute(x) for x in challenges]

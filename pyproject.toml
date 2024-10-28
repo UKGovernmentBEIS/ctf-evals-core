@@ -1,12 +1,18 @@
 [tool.poetry]
-name = "ctf-evals-core"
+name = "ctf_evals_core"
 version = "0.1.0"
 description = ""
 authors = ["Will.Payne <Will.Payne@dsit.gov.uk>"]
 readme = "README.md"
+packages = [
+  {include = "ctf_evals_core", from = "src"},
+  {include = "ctf_evals_tests", from = "src"},
+]
 
 [tool.poetry.dependencies]
-python = "^3.12"
+python = "^3.11"
+pyyaml = "^6.0.1"
+pytest = "^8.1.1"
 
 
 [build-system]
