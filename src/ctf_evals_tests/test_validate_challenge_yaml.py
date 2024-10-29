@@ -3,22 +3,28 @@ from glob import glob
 from pathlib import Path
 
 import pytest
-import yaml
+from ruamel.yaml import YAML
+from ruamel.yaml.comments import CommentedMap
 
 
-print("Hello, world!")
 def _discover_challenge_task_modules() -> list[Path]:
     results = glob("challenges/**/challenge.yaml", recursive=True)
     results = [Path(result) for result in results]
     assert results, "Failed to discover any challenges for test"
     return results
 
-def test_should_pass():
-    assert True, "Should never hit this"
+
+def load_yaml(file):
+    # Load YAML file using ruamel.yaml
+    yaml = YAML()
+    with open(file, "r") as file:
+        data = yaml.load(file)
+    return data
+
 
 @pytest.mark.parametrize("task_module", _discover_challenge_task_modules())
 def test_flag_and_flag_format_given_in_metadata(task_module: Path) -> None:
-    challenge_data = yaml.load(open(task_module, "r"), Loader=yaml.FullLoader)
+    challenge_data = load_yaml(task_module)
     assert challenge_data, f"Failed to parse task module {task_module}"
 
     # Find flag
@@ -33,27 +39,52 @@ def test_flag_and_flag_format_given_in_metadata(task_module: Path) -> None:
 
     # Check flag is expected format
     prefix_and_flag = flag.split("{")
-    assert len(prefix_and_flag) == 2, f"Flag is not in expected format for {task_module}"
-    assert prefix_and_flag[1][-1] == "}", \
-          f"Flag is not in expected format for {task_module}"
+    assert (
+        len(prefix_and_flag) == 2
+    ), f"Flag is not in expected format for {task_module}"
+    assert (
+        prefix_and_flag[1][-1] == "}"
+    ), f"Flag is not in expected format for {task_module}"
 
     # Check flag format hint is expected format
     prefix = flag.split("{")[0]
     expected_format = f"{prefix}" + "{" + "..." + "}"
-    assert flag_format == expected_format, \
-          f"Flag format does not match expected format for {task_module}"
+    assert (
+        flag_format == expected_format
+    ), f"Flag format does not match expected format for {task_module}"
+
 
 @pytest.mark.parametrize("task_module", _discover_challenge_task_modules())
 def test_files_exist_for_sandbox_copy(task_module: Path) -> None:
     parent_folder = task_module.parent
     assert task_module.is_file(), f"Failed to find task module {task_module}"
-    data = yaml.load(open(task_module, "r"), Loader=yaml.FullLoader)
+
+    data = load_yaml(task_module)
+
     assert data, f"Failed to parse task module {task_module}"
 
     # Collect files
-    files = data.get("files", {})
-    for variant in data.get("variant", []):
-        files.update(variant.get("files", {}))
+    def collect_files(files_map: CommentedMap) -> dict:
+        comments = files_map.ca.items
+        files = {}
+        for key, value in files_map.items():
+            ignore = False
+            file_comments = comments.get(key, [])
+            for comment in file_comments:
+                if comment is None:
+                    continue
+                if "pathcheck_ignore" in comment.value:
+                    ignore = True
+                    break
+            if not ignore:
+                files[key] = value
+            else:
+                print(f"Skipping file {key} due to pathcheck_ignore comment")
+        return files
+
+    files = collect_files(data.get("files", CommentedMap()))
+    for variant in data.get("variants", {}).values():
+        files.update(collect_files(variant.get("files", CommentedMap())))
 
     # If no files are specified, skip the test
     if not files:
@@ -63,5 +94,7 @@ def test_files_exist_for_sandbox_copy(task_module: Path) -> None:
     # Check source paths exist
     for source in files.values():
         file_path = parent_folder / source
-        assert os.path.isfile(file_path), f"Failed to find source file {file_path}"
+        assert os.path.isfile(
+            file_path
+        ), f"Failed to find source file {file_path}. Either the path is incorrect or you are missing a # pathcheck_ignore comment in the challenge.yaml file."  # noqa: E501
 

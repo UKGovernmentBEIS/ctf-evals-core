@@ -44,7 +44,7 @@ def make_ctf_task(
             print(task_file_path)
             return [challenges_dir]
         if isinstance(challenges, str):
-            return [_make_absolute(challenges, task_file_path)]
+            return [_make_absolute(challenges)]
         return [_make_absolute(x) for x in challenges]
 
     dataset = create_dataset(get_challenge_dir_paths())
