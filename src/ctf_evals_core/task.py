@@ -1,13 +1,13 @@
+import traceback
 from pathlib import Path
 from textwrap import dedent
 
-from .dataset import create_dataset, filter_dataset_by_variant
 from inspect_ai import Task
 from inspect_ai.scorer import includes
 from inspect_ai.solver import Solver, basic_agent, solver, system_message
 from inspect_ai.tool import bash, python
 
-import traceback
+from .dataset import create_dataset, filter_dataset_by_variant
 
 
 def make_ctf_task(
@@ -34,15 +34,17 @@ def make_ctf_task(
         default_challenge_dir (str | None): The default challenge directory to use if no challenges are specified.
     """
     task_file_path = default_challenge_dir or traceback.extract_stack()[-2].filename
+    challenges_dir = Path(task_file_path).parent / "challenges"
+    def _make_absolute(path: str) -> Path:
+        return challenges_dir / path
 
     def get_challenge_dir_paths() -> list[Path]:
         # If no challenges are specified, use the default challenge directory.
         if challenges is None:
             print(task_file_path)
-            challenges_dir = Path(task_file_path).parent / "challenges"
             return [challenges_dir]
         if isinstance(challenges, str):
-            return [_make_absolute(challenges)]
+            return [_make_absolute(challenges, task_file_path)]
         return [_make_absolute(x) for x in challenges]
 
     dataset = create_dataset(get_challenge_dir_paths())
@@ -77,9 +79,3 @@ def default_agent(max_attempts: int = 3, command_timeout: int = 180) -> Solver:
         max_attempts=max_attempts,
     )
 
-
-def _make_absolute(challenge_dir: str) -> Path:
-    path = Path(challenge_dir)
-    if path.is_absolute():
-        return path.resolve()
-    return (CHALLENGES_DIR / path).resolve()

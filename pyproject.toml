@@ -13,6 +13,8 @@ packages = [
 python = "^3.11"
 pyyaml = "^6.0.1"
 pytest = "^8.1.1"
+ruamel-yaml = "^0.18.6"
+inspect-ai = {git = "https://github.com/UKGovernmentBEIS/inspect_ai.git"}
 
 
 [build-system]
