@@ -1,6 +1,6 @@
+from inspect_ai import Task
 from inspect_ai.model import ModelOutput
 from inspect_ai.solver import Generate, Solver, TaskState, solver
-from inspect_ai.task import Task
 from inspect_ai.util import sandbox
 
 from .task import make_ctf_task
