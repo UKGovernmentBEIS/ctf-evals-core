@@ -15,7 +15,7 @@ def make_solver_task(
     task = make_ctf_task(
             challenges=challenges,
             variants="solution",
-            agent=solver_agent(),
+            agent=solution_script_runner(),
             max_attempts=max_attempts,
             max_messages=max_messages,
             default_challenge_dir=default_challenge_dir,
@@ -23,8 +23,8 @@ def make_solver_task(
     return task
 
 
-@solver("solver_agent")
-def solver_agent() -> Solver:
+@solver("qa")
+def solution_script_runner() -> Solver:
     async def solve(state: TaskState, generate: Generate) -> TaskState:
         exec_result = await sandbox().exec(["chmod", "+x", "solution.sh"])
         exec_result = await sandbox().exec(["bash", "solution.sh"])

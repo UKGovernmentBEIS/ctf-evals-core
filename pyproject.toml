@@ -39,3 +39,6 @@ ignore = ["E203", "D10", "D203", "D212"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
+
+[project.entry-points.inspect_ai]
+ctf_evals_core = "ctf_evals_core._registry"
