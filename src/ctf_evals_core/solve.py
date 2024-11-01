@@ -8,14 +8,13 @@ from .task import make_ctf_task
 
 def make_solver_task(
     challenges: str | list[str] | None = None,
-    variants: str | list[str] | None = None,
     max_attempts: int = 3,
     max_messages: int = 15,
     default_challenge_dir: str | None = None,
 ) -> Task:
     task = make_ctf_task(
             challenges=challenges,
-            variants=variants,
+            variants="solution",
             agent=solver_agent(),
             max_attempts=max_attempts,
             max_messages=max_messages,
