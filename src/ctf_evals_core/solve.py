@@ -23,7 +23,7 @@ def make_solver_task(
     return task
 
 
-@solver("qa_solver")
+@solver("qa")
 def qa_solver() -> Solver:
     async def solve(state: TaskState, generate: Generate) -> TaskState:
         exec_result = await sandbox().exec(["chmod", "+x", "solution.sh"])

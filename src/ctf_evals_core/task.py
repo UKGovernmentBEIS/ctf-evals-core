@@ -2,7 +2,7 @@ import traceback
 from pathlib import Path
 from textwrap import dedent
 
-from inspect_ai import Task
+from inspect_ai import Task, task
 from inspect_ai.scorer import includes
 from inspect_ai.solver import Solver, basic_agent, solver, system_message
 from inspect_ai.tool import bash, python
@@ -10,13 +10,41 @@ from inspect_ai.tool import bash, python
 from .dataset import create_dataset, filter_dataset_by_variant
 
 
+@task
+def ctf_task(
+    challenges: str | list[str] | None = None,
+    variants: str | list[str] | None = None,
+    agent: Solver | None = None,
+    max_attempts: int = 3,
+    max_messages: int = 15,
+) -> Task:
+    """Create a task for the Gray Swan challenges.
+
+    Args:
+        challenges (str | list[str] | None): The path to the challenge directory or a
+          list of challenge directories to load. Relative paths are resolved relative to
+          the challenges directory. If None, all challenges are loaded.
+        variants (str | list[str] | None): The variant or list of variants to include
+          (e.g. "easy" or "easy,hard"). If None, all variants are included.
+        agent (Solver | None): The solver to use. If None, the default solver is used.
+        max_attempts (int): The maximum number of submission attempts before
+          terminating. This argument is ignored if `agent` is provided.
+        max_messages (int): The maximum number of messages in the conversation.
+    """
+    return make_ctf_task(
+        challenges=challenges,
+        variants=variants,
+        agent=agent,
+        max_attempts=max_attempts,
+        max_messages=max_messages,
+    )
+
 def make_ctf_task(
     challenges: str | list[str] | None = None,
     variants: str | list[str] | None = None,
     agent: Solver | None = None,
     max_attempts: int = 3,
     max_messages: int = 15,
-    default_challenge_dir: str | None = None,
 ) -> Task:
     """
     Create a task for a directory of challenges.
@@ -33,15 +61,13 @@ def make_ctf_task(
         max_messages (int): The maximum number of messages in the conversation.
         default_challenge_dir (str | None): The default challenge directory to use if no challenges are specified.
     """
-    task_file_path = default_challenge_dir or traceback.extract_stack()[-2].filename
-    challenges_dir = Path(task_file_path).parent / "challenges"
+    challenges_dir = Path.cwd() / "challenges"
     def _make_absolute(path: str) -> Path:
         return challenges_dir / path
 
     def get_challenge_dir_paths() -> list[Path]:
         # If no challenges are specified, use the default challenge directory.
         if challenges is None:
-            print(task_file_path)
             return [challenges_dir]
         if isinstance(challenges, str):
             return [_make_absolute(challenges)]
