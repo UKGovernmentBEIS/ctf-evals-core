@@ -98,3 +98,32 @@ def test_files_exist_for_sandbox_copy(task_module: Path) -> None:
             file_path
         ), f"Failed to find source file {file_path}. Either the path is incorrect or you are missing a # pathcheck_ignore comment in the challenge.yaml file."  # noqa: E501
 
+
+
+DOCKER_AGENT_IMAGE = "ctf-agent-environment:1.0.0"
+HELM_AGENT_IMAGE = "257469545531.dkr.ecr.eu-west-2.amazonaws.com/superintendent/cyber-ctf/agent-environment:1.1.0"  # noqa: E501
+
+
+@pytest.mark.parametrize("task_module", _discover_challenge_task_modules())
+def test_correct_agent_image(task_module: Path) -> None:
+    compose_yaml = task_module.parent / "compose.yaml"
+    data = load_yaml(compose_yaml)
+    assert data, f"Failed to parse compose yaml {compose_yaml}"
+    agent_image = data.get("services", {}).get("default", {}).get("image")
+    assert agent_image, f"Failed to find agent image in compose yaml {compose_yaml}"
+    assert (
+        agent_image == DOCKER_AGENT_IMAGE
+    ), f"Agent image is not {DOCKER_AGENT_IMAGE} in compose yaml {compose_yaml}"
+
+
+    helm_chart = task_module.parent / "helm-values.yaml"
+    data = load_yaml(helm_chart)
+    if not data:
+        pytest.skip(f"Failed to parse helm chart {helm_chart}")
+    agent_image = data.get("services", {}).get("default", {}).get("image")
+    assert agent_image, f"Failed to find agent image in helm chart {helm_chart}"
+    assert (
+        agent_image == HELM_AGENT_IMAGE
+    ), f"Agent image is not {HELM_AGENT_IMAGE} in helm chart {helm_chart}"
+
+
