@@ -16,10 +16,13 @@ def _discover_challenge_task_modules() -> list[Path]:
 
 def load_yaml(file):
     # Load YAML file using ruamel.yaml
-    yaml = YAML()
-    with open(file, "r") as file:
-        data = yaml.load(file)
-    return data
+    try:
+        yaml = YAML()
+        with open(file, "r") as file:
+            data = yaml.load(file)
+        return data
+    except Exception as e:
+        return None
 
 
 @pytest.mark.parametrize("task_module", _discover_challenge_task_modules())

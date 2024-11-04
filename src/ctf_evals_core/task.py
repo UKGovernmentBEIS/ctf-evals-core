@@ -77,6 +77,7 @@ def make_ctf_task(
     if variants is not None:
         variants_set = {variants} if isinstance(variants, str) else set(variants)
         dataset = filter_dataset_by_variant(dataset, variants_set)
+    assert dataset and len(dataset) > 0, "No challenges found."
     return Task(
         dataset=dataset,
         plan=agent or default_agent(max_attempts=max_attempts),

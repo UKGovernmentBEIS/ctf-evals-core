@@ -1,0 +1,64 @@
+[tool.poetry]
+name = "ctf-evals-example"
+version = "0.1.0"
+description = "A template repo for CTF challenges"
+authors = [""]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.11"
+inspect-ai = {git = "https://github.com/UKGovernmentBEIS/inspect_ai.git"}
+boto3 = "^1.34.51"
+pyyaml = "^6.0.1"
+ijson = "^3.3.0"
+# ctf_evals_core = { git = "https://github.com/UKGovernmentBEIS/ctf-evals-core.git" }
+ctf_evals_core = { path = "..", develop = true }
+
+[tool.poetry.group.dev.dependencies]
+mypy = "^1.9.0"
+pre-commit = "^3.6.2"
+pytest = "^8.1.1"
+ruff = "^0.6.0"
+types-pyyaml = "^6.0.12.20240311"
+pytest-asyncio = "^0.23.7"
+anthropic = ">=0.30.1"
+google-cloud-aiplatform = "^1.46.0"
+google-generativeai = "^0.4.1"
+mistralai = "^0.1.8"
+openai = "^1.50.0"
+transformers = "^4.39.3"
+
+[tool.ruff.lint]
+select = ["E",   # pycodestyle errors
+          "W",   # pycodestyle warnings
+          "F",   # flake8
+          "D",   # pydocstyle
+          "I",   # isort
+          # "RET", # flake8-return
+          # "RUF", # ruff rules
+        ]
+ignore = ["E203", "D10", "D203", "D212"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.mypy]
+# The images dir may contain multiple modules with the same name (e.g. server.py).
+exclude = [
+  "images",
+  "solve.py",
+  "resources",
+]
+
+[[tool.mypy.overrides]]
+# agent_framework is an optional AISI-internal dependency
+module = "agent_framework.*"
+ignore_missing_imports = true
+
+[build-system]
+requires = ["poetry-core>=1.7.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+addopts = "--pyargs ctf_evals_tests"
