@@ -9,12 +9,16 @@ packages = [
   {include = "ctf_evals_tests", from = "src"},
 ]
 
+[tool.poetry.scripts]
+ctf_eval = "ctf_evals_core._cli.main:main"
+
 [tool.poetry.dependencies]
 python = "^3.11"
 pyyaml = "^6.0.1"
 pytest = "^8.1.1"
 ruamel-yaml = "^0.18.6"
 inspect-ai = {git = "https://github.com/UKGovernmentBEIS/inspect_ai.git"}
+click = "^8.1.7"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "^1.9.0"
@@ -42,3 +46,8 @@ ctf_evals_core = "ctf_evals_core._registry"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+# Ignore ctf_evals_tests since that's for people to consume not to test
+# this package
+[tool.pytest.ini_options]
+testpaths = "tests"
