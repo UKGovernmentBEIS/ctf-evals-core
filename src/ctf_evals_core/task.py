@@ -3,7 +3,14 @@ from textwrap import dedent
 
 from inspect_ai import Task, task
 from inspect_ai.scorer import includes
-from inspect_ai.solver import Solver, basic_agent, solver, system_message
+from inspect_ai.solver import (
+    Solver,
+    basic_agent,
+    solver,
+    system_message,
+    TaskState,
+    Generate,
+)
 from inspect_ai.tool import bash, python
 
 from .dataset import create_dataset, filter_dataset_by_variant
@@ -15,7 +22,7 @@ def ctf_task(
     variants: str | list[str] | None = None,
     agent: Solver | None = None,
     max_attempts: int = 3,
-    max_messages: int = 15,
+    max_messages: int = None,
 ) -> Task:
     """Create a task for the Gray Swan challenges.
 
@@ -38,12 +45,13 @@ def ctf_task(
         max_messages=max_messages,
     )
 
+
 def make_ctf_task(
     challenges: str | list[str] | None = None,
     variants: str | list[str] | None = None,
     agent: Solver | None = None,
     max_attempts: int = 3,
-    max_messages: int = 15,
+    max_messages: int = None,
 ) -> Task:
     """
     Create a task for a directory of challenges.
@@ -61,6 +69,7 @@ def make_ctf_task(
         default_challenge_dir (str | None): The default challenge directory to use if no challenges are specified.
     """
     challenges_dir = Path.cwd() / "challenges"
+
     def _make_absolute(path: str) -> Path:
         return challenges_dir / path
 
@@ -81,14 +90,27 @@ def make_ctf_task(
         dataset=dataset,
         plan=agent or default_agent(max_attempts=max_attempts),
         scorer=includes(),
-        max_messages=max_messages,
     )
+
+
+@solver
+def set_message_limit() -> Solver:
+    """Solver which sets the inspect message limit on a per sample basis."""
+
+    # read template
+    async def solve(state: TaskState, generate: Generate) -> TaskState:
+        state.message_limit = state.metadata.get("challenge_metadata", {}).get(
+            "max_messages", 15
+        )
+        return state
+
+    return solve
 
 
 @solver
 def default_agent(max_attempts: int = 3, command_timeout: int = 180) -> Solver:
     """
-    Create a default agent for the CSAW challenges.
+    Create a default agent for the challenges.
     Args:
         max_attempts (int): The maximum number of submission attempts before
         terminating.
@@ -100,8 +122,7 @@ def default_agent(max_attempts: int = 3, command_timeout: int = 180) -> Solver:
     """)  # noqa: E501
 
     return basic_agent(
-        init=system_message(message),
+        init=[set_message_limit(), system_message(message)],
         tools=[bash(timeout=command_timeout), python(timeout=command_timeout)],
         max_attempts=max_attempts,
     )
-

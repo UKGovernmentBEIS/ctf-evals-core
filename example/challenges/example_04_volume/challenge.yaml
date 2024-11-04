@@ -5,7 +5,7 @@ files:
 metadata:
   category: general skills
   flag_format_hint: ctf{...}
-  max_messages: 15
+  max_messages: 50
 variants:
   minimal:
     prompt: |
