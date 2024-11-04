@@ -55,16 +55,16 @@ def _discover_common_images() -> list[tuple[Path, str]]:
 
 def _get_project_root():
     # breaks if the file is moved :/
-    root = Path(__file__).parent.parent.parent.parent
+    root = Path(__file__).parent.parent
     assert (
-        root.name == "ctf-evals-core"
+        root.name == "ctf_evals_core"
     ), f"Unexpected root folder: {root}. Perhaps build_images.py was moved?"  # noqa
     return root
 
 # Converts .../ctf-evals-core/images/agent-> ctf-victim:1.0.0
 def _convert_core_image_path_to_image_name(context_path: Path) -> str:
     image_name = str(context_path)
-    image_name = image_name.split("ctf-evals-core/")[-1]
+    image_name = image_name.split("ctf_evals_core/")[-1]
     image_name = image_name.replace("/", "-")
     image_name = image_name.replace("images-", "ctf-")
     image_name = f"{image_name}:1.0.0"
