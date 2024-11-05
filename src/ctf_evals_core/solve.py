@@ -26,8 +26,8 @@ def make_solver_task(
 @solver("qa")
 def qa_solver() -> Solver:
     async def solve(state: TaskState, generate: Generate) -> TaskState:
-        exec_result = await sandbox().exec(["chmod", "+x", "solution.sh"])
-        exec_result = await sandbox().exec(["bash", "solution.sh"])
+        exec_result = await sandbox().exec(["bash", "-c", "chmod +x *.sh && ./solution.sh"])
+        # exec_result = await sandbox().exec(["bash", "solution.sh"])
         if exec_result.returncode != 0:
             state.output = ModelOutput.from_content(
                 "error",
@@ -39,9 +39,9 @@ def qa_solver() -> Solver:
             return state
         state.output = ModelOutput.from_content("dummy", exec_result.stdout)
         formatted_message = ModelOutput.from_content(
-            "dummy", f"```\n{exec_result.stdout}\n```"
+            "dummy", f"```\n{exec_result.stdout}\n{exec_result.stderr}\n```"
         ).message
-        print(exec_result.stdout)
+        print(formatted_message.content)
         state.messages.append(formatted_message)
         return state
 
