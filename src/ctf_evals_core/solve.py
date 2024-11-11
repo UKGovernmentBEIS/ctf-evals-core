@@ -26,8 +26,12 @@ def make_solver_task(
 @solver("qa")
 def qa_solver() -> Solver:
     async def solve(state: TaskState, generate: Generate) -> TaskState:
-        exec_result = await sandbox().exec(["bash", "-c", "chmod +x *.sh && ./solution.sh"])
-        # exec_result = await sandbox().exec(["bash", "solution.sh"])
+        solution_location = state.metadata.get("variant_metadata", {}).get("solution_location", None)
+        print(solution_location)
+        if solution_location is None: # use relative path
+            exec_result = await sandbox().exec(["bash", "-c", "chmod +x *.sh && ./solution.sh"])
+        else:
+            exec_result = await sandbox().exec(["bash", "-c", f"chmod +x {solution_location}/*.sh && {solution_location}/solution.sh"])
         if exec_result.returncode != 0:
             state.output = ModelOutput.from_content(
                 "error",
