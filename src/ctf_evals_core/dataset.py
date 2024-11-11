@@ -1,8 +1,10 @@
+import os
 from pathlib import Path
-from typing import Generator
+from typing import Callable, Generator
 
 import yaml
 from inspect_ai.dataset import Dataset, MemoryDataset, Sample
+
 from .model import ChallengeInfo
 
 CHALLENGE_INFO_FILENAME = "challenge.yaml"
@@ -45,6 +47,9 @@ def _find_challenge_dirs_recursive(
 
 
 def _create_samples(challenge_dirs: list[Path]) -> Generator[Sample, None, None]:
+    # For now we let environment variables dictate the sandbox type and spec file (path relative to challenge_dir).
+    # In the future we should consider supporting per sample sandbox specs as defined in challenge.yaml.
+    sandbox_from_dir = _make_sandbox_spec()
     for challenge_dir in challenge_dirs:
         challenge_info = _load_challenge_info(challenge_dir)
         challenge_files = _make_paths_absolute(challenge_info.files, challenge_dir)
@@ -52,6 +57,7 @@ def _create_samples(challenge_dirs: list[Path]) -> Generator[Sample, None, None]
         # Create a sample for each variant of the challenge.
         for varient_name, variant in challenge_info.variants.items():
             variant_files = _make_paths_absolute(variant.files, challenge_dir)
+            sandbox = sandbox_from_dir(challenge_dir)
             yield Sample(
                 id=f"{challenge_info.name}-{varient_name}",
                 input=variant.prompt,
@@ -62,7 +68,7 @@ def _create_samples(challenge_dirs: list[Path]) -> Generator[Sample, None, None]
                     "challenge_metadata": challenge_info.metadata,
                     "variant_metadata": variant.metadata,
                 },
-                sandbox=("docker", _make_path_absolute("compose.yaml", challenge_dir)),
+                sandbox=sandbox,
             )
 
 
@@ -81,6 +87,37 @@ def _load_challenge_info(challenge: Path) -> ChallengeInfo:
 
 def _make_paths_absolute(files: dict[str, str], base_path: Path) -> dict[str, str]:
     return {key: _make_path_absolute(value, base_path) for key, value in files.items()}
+
+
+SANDBOX_SPEC_VAR = "CTF_SANDBOX_SPEC_FILE"
+SANDBOX_PROVIDER_VAR = "CTF_SANDBOX_PROVIDER"
+
+
+def _make_sandbox_spec() -> Callable[[Path], tuple[str, str]]:
+    if SANDBOX_PROVIDER_VAR not in os.environ:
+        print("Using docker sandbox")
+        return lambda challenge_dir: (
+            "docker",
+            _make_path_absolute("compose.yaml", challenge_dir),
+        )
+    sandbox = os.environ[SANDBOX_PROVIDER_VAR]
+    if SANDBOX_SPEC_VAR not in os.environ:
+        print(f"Using {sandbox} sandbox with no spec file")
+        return lambda challenge_dir: (sandbox)
+    spec_file = os.environ[SANDBOX_SPEC_VAR]
+    print(f"Using {sandbox} sandbox with spec file {spec_file}")
+
+    def make_alt_sandbox_spec(challenge_dir) -> tuple[str, str]:
+        path = _make_path_absolute(spec_file, Path(challenge_dir))
+        if not Path(path).is_file():
+            print(
+                f"No sandbox spec file found for challenge directory {challenge_dir}, falling back to default sandbox" # noqa
+            )
+            return ("docker", _make_path_absolute("compose.yaml", challenge_dir))
+        print(f"valid_path: {path}")
+        return sandbox, path
+
+    return make_alt_sandbox_spec
 
 
 def _make_path_absolute(path_or_content: str, base_path: Path) -> str:
