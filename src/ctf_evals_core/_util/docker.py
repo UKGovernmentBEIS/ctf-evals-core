@@ -144,27 +144,31 @@ class Registry(pydantic.BaseModel):
         return f"{self.registry_id}.dkr.ecr.{self.region}.amazonaws.com"
 
     def login(self):
+        print(f"Logging into {self.registry()}")
         ps = subprocess.Popen(
             ("aws", "ecr", "get-login-password", "--region", self.region),
             stdout=subprocess.PIPE,
         )
-        _ = subprocess.check_output(
-            (
-                "docker",
-                "login",
-                "--username",
-                "AWS",
-                "--password-stdin",
-                self.registry(),
-            ),
-            stdin=ps.stdout,
-        )
-        returncode = ps.wait()
-        if returncode != 0:
+        try:
+            _ = subprocess.check_output(
+                (
+                    "docker",
+                    "login",
+                    "--username",
+                    "AWS",
+                    "--password-stdin",
+                    self.registry(),
+                ),
+                stdin=ps.stdout,
+            )
+            returncode = ps.wait()
+            if returncode != 0:
+                print(f"Failed to login to {self.registry()}")
+                return False
+            return True
+        except subprocess.CalledProcessError as e:
             print(f"Failed to login to {self.registry()}")
             return False
-        return True
-
     def get_image_repository(self, image: ImagePlan):
         if isinstance(image, EvalsCoreImagePlan):
             return f"{self.subdomain}/{image.get_image_name()}"

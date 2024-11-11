@@ -19,28 +19,31 @@ def build_images():
 
 
 @click.command(name="list")
-@click.option("--challenge_repo_path", required=False)
+@click.option("--subdomain", required=False)
 @click.option("--registry_id", required=False)
-def list_images(challenge_repo_path: str, registry_id: str):
+@click.option("--region", required=False)
+def list_images(subdomain: str, registry_id: str, region: str):
     all_images = get_images()
 
     table = Table()
     table.add_column("Image name")
-    print_ecr_details = challenge_repo_path is not None or registry_id is not None
+    print_ecr_details = (
+        subdomain is not None and registry_id is not None and region is not None
+    )
     if print_ecr_details:
         table.add_column("ECR name")
         table.add_column("Tags")
         registry = Registry(
             registry_id=registry_id,
-            challenge_prefix=challenge_repo_path,
-            region="eu-west-2",
+            challenge_prefix=subdomain,
+            region=region,
         )
         registry.login()
         for image in all_images:
             table.add_row(
                 image.get_image_name(),
                 registry.get_image_repository(image),
-                ", ".join(registry.get_image_tags(image))
+                ", ".join(registry.get_image_tags(image)),
             )
     else:
         for image in all_images:
@@ -70,6 +73,7 @@ def push_images(tag: str, subdomain: str, registry_id: str, region: str):
             print(f"Failed to push {registry.get_full_image_name(image)}")
             print(e)
             input("Press enter to continue or consider increasing the tag version")
+
 
 @click.command(name="push_one")
 @click.option("--tag", required=True)
