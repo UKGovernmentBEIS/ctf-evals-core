@@ -121,7 +121,7 @@ def test_correct_agent_image(task_module: Path) -> None:
 
 @pytest.mark.parametrize("task_module", _discover_challenge_task_modules())
 def test_valid_images(task_module: Path) -> None:
-    available_images = set([tag for path, tag in get_images()])
+    available_images = set([f"{image.get_image_name()}:1.0.0" for image in get_images()])
     compose_yaml = task_module.parent / "compose.yaml"
     data = load_yaml(compose_yaml)
     assert data, f"Failed to parse compose yaml {compose_yaml}"
