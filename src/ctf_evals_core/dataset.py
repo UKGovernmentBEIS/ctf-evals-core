@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import Callable, Generator
+from typing import Any, Callable, Generator
 
 import yaml
 from inspect_ai.dataset import Dataset, MemoryDataset, Sample
@@ -34,6 +34,26 @@ def filter_dataset_by_variant(dataset: Dataset, variants: set[str]) -> Dataset:
         # Check that metadata is not None to satisfy mypy.
         lambda x: x.metadata is not None and x.metadata["variant"] in variants
     )
+
+
+def filter_dataset_by_metadata(dataset: Dataset, filters: dict[str, Any]) -> Dataset:
+    def get_key_from_metadata(metadata, key) -> Any:
+        # Prefer variant metadata over challenge metadata over typical metadata.
+        variant_metadata = metadata.get("variant_metadata", {})
+        challenge_metadata = metadata.get("challenge_metadata", {})
+        value = variant_metadata.get(
+            key, challenge_metadata.get(key, metadata.get(key, None))
+        )
+        return value
+
+    def sample_predicate(sample: Sample) -> bool:
+        # All filters must be satisfied
+        return all(
+            get_key_from_metadata(sample.metadata, key) == value
+            for key, value in filters.items()
+        )
+
+    return dataset.filter(sample_predicate)
 
 
 def _find_challenge_dirs_recursive(
@@ -111,7 +131,7 @@ def _make_sandbox_spec() -> Callable[[Path], tuple[str, str]]:
         path = _make_path_absolute(spec_file, Path(challenge_dir))
         if not Path(path).is_file():
             print(
-                f"No sandbox spec file found for challenge directory {challenge_dir}, falling back to default sandbox" # noqa
+                f"No sandbox spec file found for challenge directory {challenge_dir}, falling back to default sandbox"  # noqa
             )
             return ("docker", _make_path_absolute("compose.yaml", challenge_dir))
         print(f"valid_path: {path}")
