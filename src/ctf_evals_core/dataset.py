@@ -134,7 +134,6 @@ def _make_sandbox_spec() -> Callable[[Path], tuple[str, str]]:
                 f"No sandbox spec file found for challenge directory {challenge_dir}, falling back to default sandbox"  # noqa
             )
             return ("docker", _make_path_absolute("compose.yaml", challenge_dir))
-        print(f"valid_path: {path}")
         return sandbox, path
 
     return make_alt_sandbox_spec

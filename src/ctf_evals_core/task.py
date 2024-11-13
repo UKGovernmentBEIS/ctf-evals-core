@@ -30,6 +30,7 @@ def ctf_task(
     metadata_filters: list[str] | None = None,
     max_attempts: int = 3,
     max_messages: int = None,
+    challenges_dir: str | None = None,
 ) -> Task:
     """Create a task for CTF challenges.
 
@@ -45,6 +46,8 @@ def ctf_task(
         max_attempts (int): The maximum number of submission attempts before
           terminating. This argument is ignored if `agent` is provided.
         max_messages (int): The maximum number of messages in the conversation.
+        challenges_dir (str | None): The default challenge directory to use to discover
+            challenges
     """
     return make_ctf_task(
         challenges=challenges,
@@ -53,6 +56,7 @@ def ctf_task(
         metadata_filters=metadata_filters,
         max_attempts=max_attempts,
         max_messages=max_messages,
+        challenges_dir=challenges_dir
     )
 
 
@@ -63,6 +67,7 @@ def make_ctf_task(
     metadata_filters: list[str] | None = None,
     max_attempts: int = 3,
     max_messages: int = None,
+    challenges_dir: str | None = None,
 ) -> Task:
     """
     Create a task for a directory of challenges.
@@ -80,10 +85,13 @@ def make_ctf_task(
         max_attempts (int): The maximum number of submission attempts before
           terminating. This argument is ignored if `agent` is provided.
         max_messages (int): The maximum number of messages in the conversation.
-        default_challenge_dir (str | None): The default challenge directory to use if no
-            challenges are specified.
+        challenges_dir (str | None): The default challenge directory to use to discover
+            challenges
     """  # noqa: D205
-    challenges_dir = Path.cwd() / "challenges"
+    if challenges_dir is None:
+        challenges_dir = Path.cwd() / "challenges"
+    else:
+        challenges_dir = Path(challenges_dir)
 
     def _make_absolute(path: str) -> Path:
         return challenges_dir / path
@@ -102,10 +110,8 @@ def make_ctf_task(
         dataset = filter_dataset_by_variant(dataset, variants_set)
 
     # Apply metadata filters
-    print(metadata_filters)
     params = parse_sample_filters(metadata_filters)
     dataset = filter_dataset_by_metadata(dataset, params)
-    print(f"Filters applied: {params}")
 
 
     assert dataset and len(dataset) > 0, "No challenges found."
