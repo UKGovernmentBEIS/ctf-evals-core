@@ -1,8 +1,10 @@
 # Provide a script to run common tasks needed to run ctf_evals
 import click
+from dotenv import load_dotenv
 
 from .build_images import images
 
+load_dotenv(".env")
 
 @click.group(invoke_without_command=True)
 @click.pass_context

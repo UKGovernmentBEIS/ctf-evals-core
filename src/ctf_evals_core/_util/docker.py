@@ -134,7 +134,7 @@ class Registry(pydantic.BaseModel):
     # Id of the registry in the form of 123456789012
     registry_id: str
     # subdomain of the registry of the form cyber-ctf
-    subdomain: str = "superintendent/cyber-ctf"
+    subdomain: str
     # region of the registry
     region: str
     # prefix for images that aren't part of core
@@ -144,7 +144,6 @@ class Registry(pydantic.BaseModel):
         return f"{self.registry_id}.dkr.ecr.{self.region}.amazonaws.com"
 
     def login(self):
-        print(f"Logging into {self.registry()}")
         ps = subprocess.Popen(
             ("aws", "ecr", "get-login-password", "--region", self.region),
             stdout=subprocess.PIPE,

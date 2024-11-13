@@ -2,15 +2,17 @@ import click
 from rich.console import Console
 from rich.table import Table
 
-from ctf_evals_core._util.docker import get_images, Registry
+from ctf_evals_core._util.docker import Registry, get_images
 
 
-@click.group(invoke_without_command=True)
-def images():
-    pass
+@click.group(invoke_without_command=True, help="Manage docker images, locally and on ECR")
+@click.pass_context
+def images(ctx: click.Context):
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
-@click.command(name="build")
+@click.command(name="build", help="Build all docker images")
 def build_images():
     all_images = get_images()
     print(f"Building {len(all_images)} images...")
@@ -18,24 +20,49 @@ def build_images():
         image.build_image()
 
 
-@click.command(name="list")
-@click.option("--subdomain", required=False)
-@click.option("--registry_id", required=False)
-@click.option("--region", required=False)
-def list_images(subdomain: str, registry_id: str, region: str):
+@click.command(name="list", help="List all docker images, optionally with ECR details")
+@click.option(
+    "--challenge_prefix",
+    envvar="CTF_EVALS_ECR_CHALLENGE_PREFIX",
+    help="The path prefix to add to images specific to the current folder",
+)
+@click.option(
+    "--subdomain",
+    envvar="CTF_EVALS_ECR_SUBDOMAIN",
+    help="The subdomain in the ECR host in which to place image repoistories",
+)
+@click.option(
+    "--registry_id",
+    envvar="CTF_EVALS_ECR_REGISTRY_ID",
+    help="The ID of the registry in which to place image repositories",
+)
+@click.option(
+    "--region",
+    envvar="CTF_EVALS_ECR_REGION",
+    help="The AWS region in which the ECR is located",
+)
+def list_images(challenge_prefix: str, subdomain: str, registry_id: str, region: str):
     all_images = get_images()
+    print(f"Listing {len(all_images)} images...")
+    print(challenge_prefix, subdomain, registry_id, region)
+    import os
+    print(os.environ.get("CTF_EVALS_ECR_CHALLENGE_PREFIX", None))
 
     table = Table()
     table.add_column("Image name")
     print_ecr_details = (
-        subdomain is not None and registry_id is not None and region is not None
+        challenge_prefix is not None
+        and subdomain is not None
+        and registry_id is not None
+        and region is not None
     )
     if print_ecr_details:
         table.add_column("ECR name")
         table.add_column("Tags")
         registry = Registry(
             registry_id=registry_id,
-            challenge_prefix=subdomain,
+            subdomain=subdomain,
+            challenge_prefix=challenge_prefix,
             region=region,
         )
         registry.login()
@@ -53,15 +80,39 @@ def list_images(subdomain: str, registry_id: str, region: str):
     console.print(table)
 
 
-@click.command(name="push")
+@click.command(name="push", help="Push all docker images to ECR")
 @click.option("--tag", required=True)
-@click.option("--subdomain", required=True)
-@click.option("--registry_id", required=True)
-@click.option("--region", required=True)
-def push_images(tag: str, subdomain: str, registry_id: str, region: str):
+@click.option(
+    "--challenge_prefix",
+    required=True,
+    envvar="CTF_EVALS_ECR_CHALLENGE_PREFIX",
+    help="The path prefix to add to images specific to the current folder",
+)
+@click.option(
+    "--subdomain",
+    required=True,
+    envvar="CTF_EVALS_ECR_SUBDOMAIN",
+    help="The subdomain in the ECR host in which to place image repoistories",
+)
+@click.option(
+    "--registry_id",
+    required=True,
+    envvar="CTF_EVALS_ECR_REGISTRY_ID",
+    help="The ID of the registry in which to place image repositories",
+)
+@click.option(
+    "--region",
+    required=True,
+    envvar="CTF_EVALS_ECR_REGION",
+    help="The AWS region in which the ECR is located",
+)
+def push_images(
+    tag: str, challenge_prefix: str, subdomain: str, registry_id: str, region: str
+):
     registry = Registry(
         registry_id=registry_id,
-        challenge_prefix=subdomain,
+        subdomain=subdomain,
+        challenge_prefix=challenge_prefix,
         region=region,
     )
     registry.login()
@@ -75,16 +126,45 @@ def push_images(tag: str, subdomain: str, registry_id: str, region: str):
             input("Press enter to continue or consider increasing the tag version")
 
 
-@click.command(name="push_one")
+@click.command(name="push_one", help="Push a single docker image to ECR")
 @click.option("--tag", required=True)
 @click.option("--image", required=True)
-@click.option("--subdomain", required=True)
-@click.option("--registry_id", required=True)
-@click.option("--region", required=True)
-def push_image(tag: str, image: str, subdomain: str, registry_id: str, region: str):
+@click.option(
+    "--challenge_prefix",
+    required=True,
+    envvar="CTF_EVALS_ECR_CHALLENGE_PREFIX",
+    help="The path prefix to add to images specific to the current folder",
+)
+@click.option(
+    "--subdomain",
+    required=True,
+    envvar="CTF_EVALS_ECR_SUBDOMAIN",
+    help="The subdomain in the ECR host in which to place image repoistories",
+)
+@click.option(
+    "--registry_id",
+    required=True,
+    envvar="CTF_EVALS_ECR_REGISTRY_ID",
+    help="The ID of the registry in which to place image repositories",
+)
+@click.option(
+    "--region",
+    required=True,
+    envvar="CTF_EVALS_ECR_REGION",
+    help="The AWS region in which the ECR is located",
+)
+def push_image(
+    tag: str,
+    image: str,
+    challenge_prefix: str,
+    subdomain: str,
+    registry_id: str,
+    region: str,
+):
     registry = Registry(
         registry_id=registry_id,
-        challenge_prefix=subdomain,
+        subdomain=subdomain,
+        challenge_prefix=challenge_prefix,
         region=region,
     )
     registry.login()
@@ -96,15 +176,42 @@ def push_image(tag: str, image: str, subdomain: str, registry_id: str, region: s
             registry.push_image(image, tag)
 
 
-@click.command(name="search")
+@click.command(
+    name="search",
+    help="Search for images by substring in name, useful for checking docker compose is configured correctly", # noqa
+)
 @click.option("--image", required=True)
-@click.option("--subdomain", required=True)
-@click.option("--registry_id", required=True)
-@click.option("--region", required=True)
-def search_images(image: str, subdomain: str, registry_id: str, region: str):
+@click.option(
+    "--challenge_prefix",
+    required=True,
+    envvar="CTF_EVALS_ECR_CHALLENGE_PREFIX",
+    help="The path prefix to add to images specific to the current folder",
+)
+@click.option(
+    "--subdomain",
+    required=True,
+    envvar="CTF_EVALS_ECR_SUBDOMAIN",
+    help="The subdomain in the ECR host in which to place image repoistories",
+)
+@click.option(
+    "--registry_id",
+    required=True,
+    envvar="CTF_EVALS_ECR_REGISTRY_ID",
+    help="The ID of the registry in which to place image repositories",
+)
+@click.option(
+    "--region",
+    required=True,
+    envvar="CTF_EVALS_ECR_REGION",
+    help="The AWS region in which the ECR is located",
+)
+def search_images(
+    image: str, challenge_prefix: str, subdomain: str, registry_id: str, region: str
+):
     registry = Registry(
         registry_id=registry_id,
-        challenge_prefix=subdomain,
+        subdomain=subdomain,
+        challenge_prefix=challenge_prefix,
         region=region,
     )
     all_images = get_images()
