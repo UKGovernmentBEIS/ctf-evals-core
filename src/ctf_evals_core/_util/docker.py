@@ -2,6 +2,7 @@ import re
 import subprocess
 from glob import glob
 from pathlib import Path
+from typing import cast, override
 
 import boto3
 import pydantic
@@ -18,8 +19,8 @@ class ImagePlan(pydantic.BaseModel):
         # output so use subprocess instead
 
         # When building locally we always tag with 1.0.0 since the image is mutable
-        # The expectation is that images are built fresh regularly and immutable copies
-        # are kept in ECR
+        # The expectation is that images are built fresh regularly and immutable copies
+        # are kept in ECR
         returncode = subprocess.check_call(
             [
                 "docker",
@@ -45,6 +46,7 @@ class ImagePlan(pydantic.BaseModel):
 
 
 class ChallengeImagePlan(ImagePlan):
+    @override
     def get_image_name(self):
         context_path = str(self.context)
         image_name = context_path.replace("/", "-")
@@ -59,8 +61,11 @@ class ChallengeImagePlan(ImagePlan):
 
 
 class CommonImagePlan(ImagePlan):
-    # converts images/some_valid_image_folder_name/Dockerfile -> ctf-some_valid_image_folder_name
+    # converts
+    # images/some_valid_image_folder_name/Dockerfile -> ctf-some_valid_image_folder_name
+    @override
     def get_image_name(self):
+        self.context
         context_path = str(self.context)
         image_name = context_path.replace("/", "-")
         image_name = image_name.replace("images-", "ctf-")
@@ -71,6 +76,7 @@ class CommonImagePlan(ImagePlan):
 
 class EvalsCoreImagePlan(ImagePlan):
     # Converts .../ctf-evals-core/images/agent-> ctf-victim
+    @override
     def get_image_name(self) -> str:
         image_name = str(self.context)
         image_name = image_name.split("ctf_evals_core/")[-1]
@@ -86,10 +92,10 @@ class EvalsCoreImagePlan(ImagePlan):
 # Discovers challenge image files in cwd/challenges, and uses a specific map from image
 # path to image name
 def _discover_challenge_dockerfiles() -> list[ChallengeImagePlan]:
-    results = glob("challenges/**/Dockerfile", recursive=True)
+    string_paths = glob("challenges/**/Dockerfile", recursive=True)
     # Parent because docker expects the folder containing the Dockerfile
-    results = [Path(result).parent for result in results]
-    image_plans = [ChallengeImagePlan(context=result) for result in results]
+    paths = [Path(result).parent for result in string_paths]
+    image_plans = [ChallengeImagePlan(context=result) for result in paths]
     return image_plans
 
 
@@ -97,8 +103,8 @@ def _discover_challenge_dockerfiles() -> list[ChallengeImagePlan]:
 def _discover_common_images() -> list[CommonImagePlan]:
     results = glob("images/**/Dockerfile", recursive=True)
     # Parent because docker expects the folder containing the Dockerfile
-    results = [Path(result).parent for result in results]
-    image_plans = [CommonImagePlan(context=result) for result in results]
+    context_paths = [Path(result).parent for result in results]
+    image_plans = [CommonImagePlan(context=result) for result in context_paths]
     return image_plans
 
 
@@ -117,8 +123,8 @@ def _discover_evals_core_images() -> list[EvalsCoreImagePlan]:
     images = _get_project_root() / "images"
     images = images.resolve()
     results = glob(f"{images}/**/Dockerfile", recursive=True)
-    results = [Path(result).parent for result in results]
-    image_plans = [EvalsCoreImagePlan(context=result) for result in results]
+    context_paths = [Path(result).parent for result in results]
+    image_plans = [EvalsCoreImagePlan(context=result) for result in context_paths]
     return image_plans
 
 
@@ -127,7 +133,7 @@ def get_images() -> list[ImagePlan]:
     common_images = _discover_common_images()
     evals_core_images = _discover_evals_core_images()
     all_images = challenge_images + common_images + evals_core_images
-    return all_images
+    return cast(list[ImagePlan], all_images)
 
 
 class Registry(pydantic.BaseModel):
@@ -165,10 +171,12 @@ class Registry(pydantic.BaseModel):
                 print(f"Failed to login to {self.registry()}")
                 return False
             return True
-        except subprocess.CalledProcessError as e:
+        except subprocess.CalledProcessError:
             print(f"Failed to login to {self.registry()}")
             return False
+
     def get_image_repository(self, image: ImagePlan):
+        """Returns the repository name for the image."""
         if isinstance(image, EvalsCoreImagePlan):
             return f"{self.subdomain}/{image.get_image_name()}"
         return f"{self.subdomain}/{self.challenge_prefix}/{image.get_image_name()}"
@@ -192,7 +200,8 @@ class Registry(pydantic.BaseModel):
             stdout=subprocess.DEVNULL,
         )
         if returncode != 0:
-            print(f"Failed to create repository {self.get_image_repository(image)}")
+            print(f"Failed to create repository {
+                  self.get_image_repository(image)}")
             return False
         return True
 
@@ -208,17 +217,17 @@ class Registry(pydantic.BaseModel):
             )
             tags = [image["imageTag"] for image in response["imageIds"]]
             return tags
-        except client.exceptions.RepositoryNotFoundException as e:
+        except client.exceptions.RepositoryNotFoundException:
             return []
-        except client.exceptions.ClientError as e:
+        except client.exceptions.ClientError:
             return []
 
     def check_tag_exists(self, image: ImagePlan, tag: str):
         return tag in self.get_image_tags(image)
 
-
     def get_full_image_name(self, image: ImagePlan):
         return f"{self.registry()}/{self.get_image_repository(image)}"
+
 
     def push_image(self, image: ImagePlan, tag: str):
         # 1. Checkif the tag already exists (tags are immutable)

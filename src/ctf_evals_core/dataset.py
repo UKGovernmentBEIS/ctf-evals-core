@@ -13,6 +13,7 @@ CHALLENGE_INFO_FILENAME = "challenge.yaml"
 def create_dataset(challenge_dirs: list[Path]) -> Dataset:
     """
     Create a dataset from a list of challenge directories.
+
     Args:
         challenge_dirs (list[Path]): A list of directories to recursively search for
           challenges in. A challenge is considered to be a directory containing a
@@ -25,6 +26,7 @@ def create_dataset(challenge_dirs: list[Path]) -> Dataset:
 def filter_dataset_by_variant(dataset: Dataset, variants: set[str]) -> Dataset:
     """
     Filter a dataset to just samples with a specific variant.
+
     Args:
         dataset (Dataset): The dataset to filter.
         variants (set[str]): A set of variant names to filter the dataset by. Only
@@ -47,7 +49,7 @@ def filter_dataset_by_metadata(dataset: Dataset, filters: dict[str, Any]) -> Dat
         return value
 
     def sample_predicate(sample: Sample) -> bool:
-        # All filters must be satisfied
+        # All filters must be satisfied
         return all(
             get_key_from_metadata(sample.metadata, key) == value
             for key, value in filters.items()
@@ -67,8 +69,6 @@ def _find_challenge_dirs_recursive(
 
 
 def _create_samples(challenge_dirs: list[Path]) -> Generator[Sample, None, None]:
-    # For now we let environment variables dictate the sandbox type and spec file (path relative to challenge_dir).
-    # In the future we should consider supporting per sample sandbox specs as defined in challenge.yaml.
     sandbox_from_dir = _make_sandbox_spec()
     for challenge_dir in challenge_dirs:
         challenge_info = _load_challenge_info(challenge_dir)
@@ -78,6 +78,9 @@ def _create_samples(challenge_dirs: list[Path]) -> Generator[Sample, None, None]
         for varient_name, variant in challenge_info.variants.items():
             variant_files = _make_paths_absolute(variant.files, challenge_dir)
             sandbox = sandbox_from_dir(challenge_dir)
+            # Will be None if spec file can't be found
+            if sandbox is None:
+                continue
             yield Sample(
                 id=f"{challenge_info.name}-{varient_name}",
                 input=variant.prompt,
@@ -131,9 +134,9 @@ def _make_sandbox_spec() -> Callable[[Path], tuple[str, str]]:
         path = _make_path_absolute(spec_file, Path(challenge_dir))
         if not Path(path).is_file():
             print(
-                f"No sandbox spec file found for challenge directory {challenge_dir}, falling back to default sandbox"  # noqa
+                f"No sandbox spec file found for challenge directory {challenge_dir}"
             )
-            return ("docker", _make_path_absolute("compose.yaml", challenge_dir))
+            return None
         return sandbox, path
 
     return make_alt_sandbox_spec

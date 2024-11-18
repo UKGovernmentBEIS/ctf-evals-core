@@ -56,7 +56,7 @@ def ctf_task(
         metadata_filters=metadata_filters,
         max_attempts=max_attempts,
         max_messages=max_messages,
-        challenges_dir=challenges_dir
+        challenges_dir=challenges_dir,
     )
 
 
@@ -113,7 +113,6 @@ def make_ctf_task(
     params = parse_sample_filters(metadata_filters)
     dataset = filter_dataset_by_metadata(dataset, params)
 
-
     assert dataset and len(dataset) > 0, "No challenges found."
     return Task(
         dataset=dataset,
@@ -155,6 +154,7 @@ def parse_sample_filters(args: str | tuple[str] | list[str] | None) -> dict[str,
                 params[key] = value
     return params
 
+
 @solver
 def set_message_limit() -> Solver:
     """Solver which sets the inspect message limit on a per sample basis."""
@@ -173,6 +173,7 @@ def set_message_limit() -> Solver:
 def default_agent(max_attempts: int = 3, command_timeout: int = 180) -> Solver:
     """
     Create a default agent for the challenges.
+
     Args:
         max_attempts (int): The maximum number of submission attempts before
         terminating.

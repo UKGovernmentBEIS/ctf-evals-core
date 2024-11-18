@@ -13,25 +13,35 @@ def make_solver_task(
     default_challenge_dir: str | None = None,
 ) -> Task:
     task = make_ctf_task(
-            challenges=challenges,
-            variants="solution",
-            agent=qa_solver(),
-            max_attempts=max_attempts,
-            max_messages=max_messages,
-            default_challenge_dir=default_challenge_dir,
-        )
+        challenges=challenges,
+        variants="solution",
+        agent=qa_solver(),
+        max_attempts=max_attempts,
+        max_messages=max_messages,
+        default_challenge_dir=default_challenge_dir,
+    )
     return task
 
 
 @solver("qa")
 def qa_solver() -> Solver:
     async def solve(state: TaskState, generate: Generate) -> TaskState:
-        solution_location = state.metadata.get("variant_metadata", {}).get("solution_location", None)
+        solution_location = state.metadata.get("variant_metadata", {}).get(
+            "solution_location", None
+        )
         print(solution_location)
-        if solution_location is None: # use relative path
-            exec_result = await sandbox().exec(["bash", "-c", "chmod +x *.sh && ./solution.sh"])
+        if solution_location is None:  # use relative path
+            exec_result = await sandbox().exec(
+                ["bash", "-c", "chmod +x *.sh && ./solution.sh"]
+            )
         else:
-            exec_result = await sandbox().exec(["bash", "-c", f"chmod +x {solution_location}/*.sh && {solution_location}/solution.sh"])
+            exec_result = await sandbox().exec(
+                [
+                    "bash",
+                    "-c",
+                    f"chmod +x {solution_location}/*.sh && {solution_location}/solution.sh", # noqa E501
+                ]
+            )
         if exec_result.returncode != 0:
             state.output = ModelOutput.from_content(
                 "error",

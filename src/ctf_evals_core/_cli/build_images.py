@@ -5,7 +5,9 @@ from rich.table import Table
 from ctf_evals_core._util.docker import Registry, get_images
 
 
-@click.group(invoke_without_command=True, help="Manage docker images, locally and on ECR")
+@click.group(
+    invoke_without_command=True, help="Manage docker images, locally and on ECR"
+)
 @click.pass_context
 def images(ctx: click.Context):
     if ctx.invoked_subcommand is None:
@@ -46,6 +48,7 @@ def list_images(challenge_prefix: str, subdomain: str, registry_id: str, region:
     print(f"Listing {len(all_images)} images...")
     print(challenge_prefix, subdomain, registry_id, region)
     import os
+
     print(os.environ.get("CTF_EVALS_ECR_CHALLENGE_PREFIX", None))
 
     table = Table()
@@ -178,7 +181,7 @@ def push_image(
 
 @click.command(
     name="search",
-    help="Search for images by substring in name, useful for checking docker compose is configured correctly", # noqa
+    help="Search for images by substring in name, useful for checking docker compose is configured correctly",  # noqa
 )
 @click.option("--image", required=True)
 @click.option(

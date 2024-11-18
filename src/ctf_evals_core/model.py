@@ -12,8 +12,8 @@ class Variant(BaseModel, frozen=True):
 
 
 class ChallengeInfo(BaseModel, frozen=True):
-    """
-    Represents the contents of a challenge.yaml file.
+    """Represents the contents of a challenge.yaml file.
+
     This class is immutable.
     """
 
