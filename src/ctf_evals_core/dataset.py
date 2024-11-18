@@ -4,6 +4,7 @@ from typing import Any, Callable, Generator
 
 import yaml
 from inspect_ai.dataset import Dataset, MemoryDataset, Sample
+from inspect_ai.util import SandboxEnvironmentType
 
 from .model import ChallengeInfo
 
@@ -73,21 +74,21 @@ def _create_samples(challenge_dirs: list[Path]) -> Generator[Sample, None, None]
     for challenge_dir in challenge_dirs:
         challenge_info = _load_challenge_info(challenge_dir)
         challenge_files = _make_paths_absolute(challenge_info.files, challenge_dir)
+        sandbox = sandbox_from_dir(challenge_dir)
+        if sandbox is None:
+            continue
 
         # Create a sample for each variant of the challenge.
-        for varient_name, variant in challenge_info.variants.items():
+        for variant_name, variant in challenge_info.variants.items():
             variant_files = _make_paths_absolute(variant.files, challenge_dir)
-            sandbox = sandbox_from_dir(challenge_dir)
             # Will be None if spec file can't be found
-            if sandbox is None:
-                continue
             yield Sample(
-                id=f"{challenge_info.name}-{varient_name}",
+                id=f"{challenge_info.name}-{variant_name}",
                 input=variant.prompt,
                 target=challenge_info.flag,
                 files=challenge_files | variant_files,
                 metadata={
-                    "variant": varient_name,
+                    "variant": variant_name,
                     "challenge_metadata": challenge_info.metadata,
                     "variant_metadata": variant.metadata,
                 },
@@ -116,7 +117,7 @@ SANDBOX_SPEC_VAR = "CTF_SANDBOX_SPEC_FILE"
 SANDBOX_PROVIDER_VAR = "CTF_SANDBOX_PROVIDER"
 
 
-def _make_sandbox_spec() -> Callable[[Path], tuple[str, str]]:
+def _make_sandbox_spec() -> Callable[[Path], SandboxEnvironmentType | None]:
     if SANDBOX_PROVIDER_VAR not in os.environ:
         print("Using docker sandbox")
         return lambda challenge_dir: (
@@ -126,18 +127,17 @@ def _make_sandbox_spec() -> Callable[[Path], tuple[str, str]]:
     sandbox = os.environ[SANDBOX_PROVIDER_VAR]
     if SANDBOX_SPEC_VAR not in os.environ:
         print(f"Using {sandbox} sandbox with no spec file")
-        return lambda challenge_dir: (sandbox)
+        return lambda challenge_dir: sandbox
+
     spec_file = os.environ[SANDBOX_SPEC_VAR]
     print(f"Using {sandbox} sandbox with spec file {spec_file}")
 
-    def make_alt_sandbox_spec(challenge_dir) -> tuple[str, str]:
+    def make_alt_sandbox_spec(challenge_dir) -> SandboxEnvironmentType | None:
         path = _make_path_absolute(spec_file, Path(challenge_dir))
         if not Path(path).is_file():
-            print(
-                f"No sandbox spec file found for challenge directory {challenge_dir}"
-            )
+            print(f"No sandbox spec file found for challenge directory {challenge_dir}")
             return None
-        return sandbox, path
+        return (sandbox, path)
 
     return make_alt_sandbox_spec
 

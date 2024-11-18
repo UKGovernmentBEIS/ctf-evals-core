@@ -228,7 +228,6 @@ class Registry(pydantic.BaseModel):
     def get_full_image_name(self, image: ImagePlan):
         return f"{self.registry()}/{self.get_image_repository(image)}"
 
-
     def push_image(self, image: ImagePlan, tag: str):
         # 1. Checkif the tag already exists (tags are immutable)
         if self.check_tag_exists(image, tag):

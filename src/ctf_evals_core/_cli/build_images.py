@@ -173,10 +173,12 @@ def push_image(
     registry.login()
     all_images = get_images()
     matching_images = [i for i in all_images if image in i.get_image_name()]
-    for image in matching_images:
-        confirmed = input(f"Pushing {registry.get_full_image_name(image)} confirm y/n")
+    for image_plan in matching_images:
+        confirmed = input(
+            f"Pushing {registry.get_full_image_name(image_plan)} confirm y/n"
+        )
         if confirmed == "y":
-            registry.push_image(image, tag)
+            registry.push_image(image_plan, tag)
 
 
 @click.command(
@@ -219,8 +221,8 @@ def search_images(
     )
     all_images = get_images()
     filtered = [i for i in all_images if image in i.get_image_name()]
-    for image in filtered:
-        print(registry.get_full_image_name(image))
+    for image_plan in filtered:
+        print(registry.get_full_image_name(image_plan))
 
 
 images.add_command(build_images)

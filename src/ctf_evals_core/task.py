@@ -29,7 +29,7 @@ def ctf_task(
     agent: Solver | None = None,
     metadata_filters: list[str] | None = None,
     max_attempts: int = 3,
-    max_messages: int = None,
+    max_messages: int | None = None,
     challenges_dir: str | None = None,
 ) -> Task:
     """Create a task for CTF challenges.
@@ -66,7 +66,7 @@ def make_ctf_task(
     agent: Solver | None = None,
     metadata_filters: list[str] | None = None,
     max_attempts: int = 3,
-    max_messages: int = None,
+    max_messages: int | None = None,
     challenges_dir: str | None = None,
 ) -> Task:
     """
@@ -89,17 +89,17 @@ def make_ctf_task(
             challenges
     """  # noqa: D205
     if challenges_dir is None:
-        challenges_dir = Path.cwd() / "challenges"
+        challenges_path = Path.cwd() / "challenges"
     else:
-        challenges_dir = Path(challenges_dir)
+        challenges_path = Path(challenges_dir)
 
     def _make_absolute(path: str) -> Path:
-        return challenges_dir / path
+        return challenges_path / path
 
     def get_challenge_dir_paths() -> list[Path]:
         # If no challenges are specified, use the default challenge directory.
         if challenges is None:
-            return [challenges_dir]
+            return [challenges_path]
         if isinstance(challenges, str):
             return [_make_absolute(challenges)]
         return [_make_absolute(x) for x in challenges]
@@ -118,6 +118,7 @@ def make_ctf_task(
         dataset=dataset,
         plan=agent or default_agent(max_attempts=max_attempts),
         scorer=includes(),
+        max_messages=max_messages,
     )
 
 

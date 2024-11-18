@@ -10,7 +10,7 @@ def make_solver_task(
     challenges: str | list[str] | None = None,
     max_attempts: int = 3,
     max_messages: int = 15,
-    default_challenge_dir: str | None = None,
+    challenge_dir: str | None = None,
 ) -> Task:
     task = make_ctf_task(
         challenges=challenges,
@@ -18,7 +18,7 @@ def make_solver_task(
         agent=qa_solver(),
         max_attempts=max_attempts,
         max_messages=max_messages,
-        default_challenge_dir=default_challenge_dir,
+        challenges_dir=challenge_dir,
     )
     return task
 
@@ -39,7 +39,7 @@ def qa_solver() -> Solver:
                 [
                     "bash",
                     "-c",
-                    f"chmod +x {solution_location}/*.sh && {solution_location}/solution.sh", # noqa E501
+                    f"chmod +x {solution_location}/*.sh && {solution_location}/solution.sh",  # noqa E501
                 ]
             )
         if exec_result.returncode != 0:

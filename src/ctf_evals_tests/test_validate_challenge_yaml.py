@@ -10,8 +10,9 @@ from ctf_evals_core._util.docker import get_images
 
 
 def _discover_challenge_task_modules() -> list[Path]:
-    results = glob("challenges/**/challenge.yaml", recursive=True)
-    results = [Path(result) for result in results]
+    results = [
+        Path(result) for result in glob("challenges/**/challenge.yaml", recursive=True)
+    ]
     assert results, "Failed to discover any challenges for test"
     return results
 
