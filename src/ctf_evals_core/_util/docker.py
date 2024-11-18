@@ -6,10 +6,22 @@ from typing import cast, override
 
 import boto3
 import pydantic
+from pydantic import field_validator
 
 
 class ImagePlan(pydantic.BaseModel):
     context: Path
+
+    @field_validator("context")
+    @classmethod
+    def validate_context(cls, v):
+        assert v.is_dir(), f"Invalid context: {v}"
+        return v
+
+    @classmethod
+    def from_dockerfile_path(cls, path: str):
+        assert Path(path).name == "Dockerfile", "Invalid dockerfile path"
+        return cls(context=Path(path).parent)
 
     def get_image_name(self) -> str:
         raise NotImplementedError
@@ -46,13 +58,32 @@ class ImagePlan(pydantic.BaseModel):
 
 
 class ChallengeImagePlan(ImagePlan):
+    @field_validator("context")
+    @classmethod
+    def validate_context(cls, v):
+        assert v.is_dir(), f"Invalid context: {v}, should be a directory"
+        assert (
+            v.parent.name == "images"
+        ), f"Invalid context: {v}, should be in images folder"
+        challenge_dir = v.parent.parent
+        assert (
+            challenge_dir.is_dir()
+        ), f"Invalid context: {v}, should be in a challenge folder"
+        challengeyaml = challenge_dir / "challenge.yaml"
+        assert (
+            challengeyaml.exists()
+        ), f"Invalid context: {v}, should be in a challenge folder containing a challenge.yaml file" # noqa
+        return v
+
     @override
     def get_image_name(self):
         context_path = str(self.context)
-        image_name = context_path.replace("/", "-")
+        image_name = context_path.split("challenges/")[-1]
+
+        # must be in a directory inside a images directory
+        image_name = image_name.replace("/", "-")
         image_name = image_name.replace("images-", "")
-        image_name = image_name.replace("-Dockerfile", "")
-        image_name = image_name.replace("challenges", "ctf")
+        image_name = "ctf-" + image_name
         # Ensure valid name
         # ctf-some_valid_challenge_folder_name-some_valid_service_folder_name
         regex = r"^ctf-[a-zA-Z0-9_]+-[a-zA-Z0-9_]+$"
@@ -61,27 +92,55 @@ class ChallengeImagePlan(ImagePlan):
 
 
 class CommonImagePlan(ImagePlan):
-    # converts
-    # images/some_valid_image_folder_name/Dockerfile -> ctf-some_valid_image_folder_name
+
+    @field_validator("context")
+    @classmethod
+    def validate_context(cls, v):
+        assert v.is_dir(), f"Invalid context: {v}, should be a directory"
+        assert (
+            v.parent.name == "images"
+        ), f"Invalid context: {v}, should be in images folder"
+        maybe_challenge_dir = v.parent.parent
+        challengeyaml = maybe_challenge_dir / "challenge.yaml"
+        assert (
+            not challengeyaml.exists()
+        ), f"Invalid context: {v}, should be in a top level images folder not a challenge folder"  # noqa
+        return v
+
     @override
     def get_image_name(self):
-        self.context
-        context_path = str(self.context)
-        image_name = context_path.replace("/", "-")
-        image_name = image_name.replace("images-", "ctf-")
+        image_name = str(self.context)
+        image_name = image_name.split("images/")[-1]
+        image_name = image_name.replace("/", "-")
+        image_name = "ctf-" + image_name
         regex = r"^ctf-[a-zA-Z0-9_-]+$"
         assert re.match(regex, image_name), f"Invalid image name: {image_name}"
         return image_name
 
 
 class EvalsCoreImagePlan(ImagePlan):
-    # Converts .../ctf-evals-core/images/agent-> ctf-victim
+
+    @field_validator("context")
+    @classmethod
+    def validate_context(cls, v):
+        assert v.is_dir(), f"Invalid context: {v}, should be a directory"
+        assert (
+            v.parent.name == "images"
+        ), f"Invalid context: {v}, should be in images folder"
+        core_dir = v.parent.parent
+        assert core_dir.name == "ctf_evals_core", f"Invalid context: {v}, should be in the ctf_evals_core folder"  # noqa
+        challengeyaml = core_dir / "challenge.yaml"
+        assert (
+            not challengeyaml.exists()
+        ), f"Invalid context: {v}, should be in a top level images folder not a challenge folder"  # noqa
+        return v
+
     @override
     def get_image_name(self) -> str:
         image_name = str(self.context)
-        image_name = image_name.split("ctf_evals_core/")[-1]
+        image_name = image_name.split("images/")[-1]
         image_name = image_name.replace("/", "-")
-        image_name = image_name.replace("images-", "ctf-")
+        image_name = "ctf-" + image_name
         # Ensure valid name
         # ctf-some_valid_challenge_folder_name-some_valid_service_folder_name
         regex = r"^ctf-[a-zA-Z0-9_-]+$"
@@ -91,24 +150,24 @@ class EvalsCoreImagePlan(ImagePlan):
 
 # Discovers challenge image files in cwd/challenges, and uses a specific map from image
 # path to image name
-def _discover_challenge_dockerfiles() -> list[ChallengeImagePlan]:
-    string_paths = glob("challenges/**/Dockerfile", recursive=True)
+def _discover_challenge_dockerfiles(root_dir: Path) -> list[ChallengeImagePlan]:
+    results = glob(f"{root_dir}/challenges/**/Dockerfile", recursive=True)
     # Parent because docker expects the folder containing the Dockerfile
-    paths = [Path(result).parent for result in string_paths]
-    image_plans = [ChallengeImagePlan(context=result) for result in paths]
+    image_plans = [
+        ChallengeImagePlan.from_dockerfile_path(result) for result in results
+    ]
     return image_plans
 
 
 # Discovers a generic image in the cwd/images folder
-def _discover_common_images() -> list[CommonImagePlan]:
-    results = glob("images/**/Dockerfile", recursive=True)
+def _discover_common_images(root_dir: Path) -> list[CommonImagePlan]:
+    results = glob(f"{root_dir}/images/**/Dockerfile", recursive=True)
     # Parent because docker expects the folder containing the Dockerfile
-    context_paths = [Path(result).parent for result in results]
-    image_plans = [CommonImagePlan(context=result) for result in context_paths]
+    image_plans = [CommonImagePlan.from_dockerfile_path(result) for result in results]
     return image_plans
 
 
-def _get_project_root():
+def _get_core_root():
     # breaks if the file is moved :/
     root = Path(__file__).parent.parent
     assert (
@@ -120,17 +179,19 @@ def _get_project_root():
 # Discovers the evals-core image in the ctf_evals_core/images folder
 # the long term solution is to have a docker registry for these images
 def _discover_evals_core_images() -> list[EvalsCoreImagePlan]:
-    images = _get_project_root() / "images"
+    images = _get_core_root() / "images"
     images = images.resolve()
     results = glob(f"{images}/**/Dockerfile", recursive=True)
-    context_paths = [Path(result).parent for result in results]
-    image_plans = [EvalsCoreImagePlan(context=result) for result in context_paths]
+    image_plans = [
+        EvalsCoreImagePlan.from_dockerfile_path(result) for result in results
+    ]
     return image_plans
 
 
-def get_images() -> list[ImagePlan]:
-    challenge_images = _discover_challenge_dockerfiles()
-    common_images = _discover_common_images()
+def get_images(root_dir: Path | None = None) -> list[ImagePlan]:
+    root_dir = root_dir or Path.cwd()
+    challenge_images = _discover_challenge_dockerfiles(root_dir=root_dir)
+    common_images = _discover_common_images(root_dir=root_dir)
     evals_core_images = _discover_evals_core_images()
     all_images = challenge_images + common_images + evals_core_images
     return cast(list[ImagePlan], all_images)
