@@ -1,5 +1,5 @@
+from collections import Counter
 from pathlib import Path
-from typing import Counter
 
 import mock
 import pytest
@@ -9,10 +9,12 @@ from ctf_evals_core._util.docker import (
     ChallengeImagePlan,
     CommonImagePlan,
     EvalsCoreImagePlan,
+    ImagePlan,
     get_images,
 )
 
 
+# Image resolution
 def test_list_images():
     test_tree = Path(__file__).parent / "test_tree"
     images = get_images(root_dir=test_tree.resolve())
@@ -42,35 +44,66 @@ def test_list_images():
         ),
     ],
 )
-def test_image_name_generation(dockerfile_path, expected_name, image_type):
+def test_image_name_generation(
+    dockerfile_path: str, expected_name: str, image_type: ImagePlan
+):
     with mock.patch("pathlib.Path.is_dir", return_value=True):
         with mock.patch(
-            "pathlib.Path.exists", return_value=image_type == ChallengeImagePlan
+            "pathlib.Path.exists", return_value=image_type == ChallengeImagePlan # noqa
         ):
-            plan = image_type.from_dockerfile_path(Path(dockerfile_path))
+            plan = image_type.from_dockerfile_path(dockerfile_path)
             name = plan.get_image_name()
             assert name == expected_name, f"Expected {expected_name}, got {name}"
 
 
+SHOULD_BE_IN_IMAGES_MESSAGE = "should be in images folder"
+SHOULD_BE_IN_EVALS_CORE = "should be in the ctf_evals_core folder"
+NOT_CHALLENFES_FOLDER = "not a challenge folder"
+
+
 @pytest.mark.parametrize(
-    "dockerfile_path, image_type",
+    "dockerfile_path, image_type, message",
     [
         # Dockerfiles should be in folders within their expected locations
-        ("challenges/challenge1/images/Dockerfile", ChallengeImagePlan),
-        ("images/Dockerfile", CommonImagePlan),
-        ("images/Dockerfile", EvalsCoreImagePlan),
+        (
+            "challenges/challenge1/images/Dockerfile",
+            ChallengeImagePlan,
+            SHOULD_BE_IN_IMAGES_MESSAGE,
+        ),
+        ("images/Dockerfile", CommonImagePlan, SHOULD_BE_IN_IMAGES_MESSAGE),
+        ("images/Dockerfile", EvalsCoreImagePlan, SHOULD_BE_IN_IMAGES_MESSAGE),
         # ChallengeImagePlans can't be made from common image folders
-        ("images/Dockerfile", ChallengeImagePlan),
+        ("images/Dockerfile", ChallengeImagePlan, SHOULD_BE_IN_IMAGES_MESSAGE),
         # Common and Core images can't be made from challenge folders
-        ("challenges/challenge1/images/victim/Dockerfile", CommonImagePlan),
-        ("challenges/challenge1/images/vicim/Dockerfile", EvalsCoreImagePlan),
+        (
+            "challenges/challenge1/images/victim/Dockerfile",
+            CommonImagePlan,
+            NOT_CHALLENFES_FOLDER,
+        ),
+        (
+            "challenges/challenge1/images/victim/Dockerfile",
+            EvalsCoreImagePlan,
+            SHOULD_BE_IN_EVALS_CORE,
+        ),
         # Dockerfiles in resources of a challenge will not be valid under any regime
-        ("challenges/challenge1/resources/Dockerfile", ChallengeImagePlan),
-        ("challenges/challenge1/resources/Dockerfile", EvalsCoreImagePlan),
-        ("challenges/challenge1/resources/Dockerfile", CommonImagePlan),
+        (
+            "challenges/challenge1/resources/Dockerfile",
+            ChallengeImagePlan,
+            SHOULD_BE_IN_IMAGES_MESSAGE,
+        ),
+        (
+            "challenges/challenge1/resources/Dockerfile",
+            EvalsCoreImagePlan,
+            SHOULD_BE_IN_IMAGES_MESSAGE,
+        ),
+        (
+            "challenges/challenge1/resources/Dockerfile",
+            CommonImagePlan,
+            SHOULD_BE_IN_IMAGES_MESSAGE,
+        ),
     ],
 )
-def test_invalid_image_names(dockerfile_path, image_type):
+def test_invalid_image_names(dockerfile_path: str, image_type: ImagePlan, message: str):
     """Invalid images should raise an AssertionError.
 
     We expect dockerfile paths for plans to be:
@@ -79,8 +112,8 @@ def test_invalid_image_names(dockerfile_path, image_type):
     CommonImagePlan: images/somefoldername/Dockerfile
     All non matching names should raise an AssertionError.
     """
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValidationError, match=message):
         with mock.patch("pathlib.Path.is_dir", return_value=True):
             with mock.patch("pathlib.Path.exists", return_value=True):
-                plan = image_type.from_dockerfile_path(Path(dockerfile_path))
-                plan.get_image_name()
+                plan = image_type.from_dockerfile_path(dockerfile_path)
+                _ = plan.get_image_name()
