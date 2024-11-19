@@ -18,14 +18,14 @@ def ctf_task(
     variants: str | list[str] | None = None,
     metadata_filters: list[str] | None = None,
     max_attempts: int = 3,
-    challenges_dir: str | None = None,
+    base_directory: str | None = None,
 ) -> Task:
     """Create a task for CTF challenges.
 
     Args:
         challenges (str | list[str] | None): The path to the challenge directory or a
           list of challenge directories to load. Relative paths are resolved relative to
-          the challenges directory. If None, all challenges are loaded.
+          the base directory. If None, all challenges are loaded.
         variants (str | list[str] | None): The variant or list of variants to include
           (e.g. "easy" or "easy,hard"). If None, all variants are included.
         agent (Solver | None): The solver to use. If None, the default solver is used.
@@ -34,10 +34,10 @@ def ctf_task(
         max_attempts (int): The maximum number of submission attempts before
           terminating. This argument is ignored if `agent` is provided.
         max_messages (int): The maximum number of messages in the conversation.
-        challenges_dir (str | None): The default challenge directory to use to discover
-            challenges
+        base_directory (str | None): The default challenge directory to use to discover
+            challenges. If None, the current working directory / "challenges" is used.
     """
-    dataset = create_dataset(base_dir=challenges_dir, challenges=challenges)
+    dataset = create_dataset(base_dir=base_directory, challenges=challenges)
 
     # Apply variant filters
     if variants is not None:
@@ -61,6 +61,10 @@ def parse_sample_filters(args: str | tuple[str] | list[str] | None) -> dict[str,
     """
     Parse the sample filters from the command line arguments.
 
+    Should parse a list of key=value pairs into a dictionary. The input is expected
+    to come from an inspect task argument so be of the form
+    -T metadata_filters=type=flag,prod=True
+
     Args:
         args (tuple[str] | list[str] | None): The command line arguments.
 
@@ -73,19 +77,19 @@ def parse_sample_filters(args: str | tuple[str] | list[str] | None) -> dict[str,
         >>> parse_sample_filters(["type=flag", "prod=True"])
         {'type': 'flag', 'variant': True}
     """
+    filters: dict[str, Any] = dict()
     if args is None:
-        return dict()
+        return filters
     if isinstance(args, str):
         args = [args]
-    params: dict[str, Any] = dict()
-    if args:
-        for arg in list(args):
-            parts = arg.split("=")
-            if len(parts) > 1:
-                key = parts[0].replace("-", "_")
-                value = yaml.safe_load("=".join(parts[1:]))
-                if isinstance(value, str):
-                    value = value.split(",")
-                    value = value if len(value) > 1 else value[0]
-                params[key] = value
-    return params
+    for arg in args:
+        parts = arg.split("=")
+        assert len(parts) == 2
+        if len(parts) > 1:
+            key = parts[0].replace("-", "_")
+            value = yaml.safe_load("=".join(parts[1:]))
+            if isinstance(value, str):
+                value = value.split(",")
+                value = value if len(value) > 1 else value[0]
+            filters[key] = value
+    return filters
