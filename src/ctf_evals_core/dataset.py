@@ -23,21 +23,16 @@ def create_dataset(
         challenges: (str | list[str] | None): An optional list of subdirectories within
             the challenges directory to load. If None, all challenges are loaded
     """
-    if base_dir is None:
-        challenges_path = Path.cwd() / "challenges"
-    else:
-        challenges_path = Path(base_dir)
-
-    def _make_absolute(path: str) -> Path:
-        return challenges_path / path
+    default_base_dir = Path.cwd() / "challenges"
+    challenges_path = Path(base_dir) if base_dir is not None else default_base_dir
 
     def get_challenge_dir_paths() -> list[Path]:
         # If no challenges are specified, use the default challenge directory.
         if challenges is None:
             return [challenges_path]
         if isinstance(challenges, str):
-            return [_make_absolute(challenges)]
-        return [_make_absolute(x) for x in challenges]
+            return [challenges_path / challenges]
+        return [challenges_path / x for x in challenges]
 
     challenge_dir_paths = get_challenge_dir_paths()
     challenge_dirs = list(_find_challenge_dirs_recursive(challenge_dir_paths))
@@ -54,7 +49,6 @@ def filter_dataset_by_variant(dataset: Dataset, variants: set[str]) -> Dataset:
           samples with a variant name contained in this set are included.
     """
     return dataset.filter(
-        # Check that metadata is not None to satisfy mypy.
         lambda x: x.metadata is not None and x.metadata["variant"] in variants
     )
 
@@ -73,22 +67,23 @@ def filter_dataset_by_metadata(dataset: Dataset, filters: dict[str, Any]) -> Dat
     """
 
     def get_key_from_metadata(metadata, key) -> Any:
-        # Prefer variant metadata over challenge metadata over typical metadata.
         variant_metadata = metadata.get("variant_metadata", {})
         challenge_metadata = metadata.get("challenge_metadata", {})
+        # Prefer variant metadata over challenge metadata over typical metadata
+        # using defaults
         value = variant_metadata.get(
             key, challenge_metadata.get(key, metadata.get(key, None))
         )
         return value
 
-    def sample_predicate(sample: Sample) -> bool:
+    def predicate(sample: Sample) -> bool:
         # All filters must be satisfied
         return all(
             get_key_from_metadata(sample.metadata, key) == value
             for key, value in filters.items()
         )
 
-    return dataset.filter(sample_predicate)
+    return dataset.filter(predicate)
 
 
 def _find_challenge_dirs_recursive(
@@ -102,18 +97,20 @@ def _find_challenge_dirs_recursive(
 
 
 def _create_samples(challenge_dirs: list[Path]) -> Generator[Sample, None, None]:
-    sandbox_from_dir = _make_sandbox_resolver()
+    resolve_sandbox_from_challenge_dir = _make_sandbox_resolver()
     for challenge_dir in challenge_dirs:
         challenge_info = _load_challenge_info(challenge_dir)
-        challenge_files = _make_paths_absolute(challenge_info.files, challenge_dir)
-        sandbox = sandbox_from_dir(challenge_dir)
+        challenge_files = _resolve_paths(challenge_info.files, challenge_dir)
+        sandbox = resolve_sandbox_from_challenge_dir(challenge_dir)
+        # Sandbox is none if spec file can't be found
+        # Skip the whole challenge if the sandbox can't be resolved
         if sandbox is None:
+            print(f"No sandbox spec file found for challenge directory {challenge_dir}")
             continue
 
         # Create a sample for each variant of the challenge.
         for variant_name, variant in challenge_info.variants.items():
-            variant_files = _make_paths_absolute(variant.files, challenge_dir)
-            # Will be None if spec file can't be found
+            variant_files = _resolve_paths(variant.files, challenge_dir)
             yield Sample(
                 id=f"{challenge_info.name}-{variant_name}",
                 input=variant.prompt,
@@ -142,8 +139,8 @@ def _load_challenge_info(challenge: Path) -> ChallengeInfo:
     return ChallengeInfo(**data)
 
 
-def _make_paths_absolute(files: dict[str, str], base_path: Path) -> dict[str, str]:
-    return {key: _make_path_absolute(value, base_path) for key, value in files.items()}
+def _resolve_paths(files: dict[str, str], base_path: Path) -> dict[str, str]:
+    return {key: _resolve_path(value, base_path) for key, value in files.items()}
 
 
 SANDBOX_SPEC_VAR = "CTF_SANDBOX_SPEC_FILE"
@@ -151,6 +148,8 @@ SANDBOX_PROVIDER_VAR = "CTF_SANDBOX_PROVIDER"
 
 
 def _make_sandbox_resolver() -> Callable[[Path], SandboxEnvironmentType | None]:
+    # If no sandbox provider is set, use the docker sandbox
+    # If the sandbox provider is set to docker, assume the spec file is compose.yaml
     if (
         SANDBOX_PROVIDER_VAR not in os.environ
         or os.environ[SANDBOX_PROVIDER_VAR] == "docker"
@@ -158,27 +157,32 @@ def _make_sandbox_resolver() -> Callable[[Path], SandboxEnvironmentType | None]:
         print("Using docker sandbox")
         return lambda challenge_dir: (
             "docker",
-            _make_path_absolute("compose.yaml", challenge_dir),
+            _resolve_path("compose.yaml", challenge_dir),
         )
+
     sandbox = os.environ[SANDBOX_PROVIDER_VAR]
+
+    # If no spec file is set, return the sandbox provider as a string
+    # Inspect will use the default spec for the provider
     if SANDBOX_SPEC_VAR not in os.environ:
         print(f"Using {sandbox} sandbox with no spec file")
         return lambda challenge_dir: sandbox
 
+    # Else make a resolver which returns the sandbox provider and the spec file
+    # (or None if the spec file can't be found)
     spec_file = os.environ[SANDBOX_SPEC_VAR]
     print(f"Using {sandbox} sandbox with spec file {spec_file}")
 
     def make_alt_sandbox_spec(challenge_dir) -> SandboxEnvironmentType | None:
-        path = _make_path_absolute(spec_file, Path(challenge_dir))
+        path = _resolve_path(spec_file, Path(challenge_dir))
         if not Path(path).is_file():
-            print(f"No sandbox spec file found for challenge directory {challenge_dir}")
             return None
         return (sandbox, path)
 
     return make_alt_sandbox_spec
 
 
-def _make_path_absolute(path_or_content: str, base_path: Path) -> str:
+def _resolve_path(path_or_content: str, base_path: Path) -> str:
     if Path(path_or_content).is_absolute():
         return path_or_content
     path = base_path / path_or_content
