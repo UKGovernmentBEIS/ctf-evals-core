@@ -1,30 +1,15 @@
-from inspect_ai import Task
 from inspect_ai.model import ModelOutput
 from inspect_ai.solver import Generate, Solver, TaskState, solver
 from inspect_ai.util import sandbox
 
-from .task import make_ctf_task
-
-
-def make_solver_task(
-    challenges: str | list[str] | None = None,
-    max_attempts: int = 3,
-    max_messages: int = 15,
-    challenge_dir: str | None = None,
-) -> Task:
-    task = make_ctf_task(
-        challenges=challenges,
-        variants="solution",
-        agent=qa_solver(),
-        max_attempts=max_attempts,
-        max_messages=max_messages,
-        challenges_dir=challenge_dir,
-    )
-    return task
-
 
 @solver("qa")
 def qa_solver() -> Solver:
+    """A solver for doing QA on challenges.
+
+    This solver expects a solution.sh script in the challenge directory. 
+    It executes it and scores it's output
+    """
     async def solve(state: TaskState, generate: Generate) -> TaskState:
         solution_location = state.metadata.get("variant_metadata", {}).get(
             "solution_location", None
