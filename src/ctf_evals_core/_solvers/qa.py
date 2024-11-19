@@ -7,9 +7,10 @@ from inspect_ai.util import sandbox
 def qa_solver() -> Solver:
     """A solver for doing QA on challenges.
 
-    This solver expects a solution.sh script in the challenge directory. 
+    This solver expects a solution.sh script in the challenge directory.
     It executes it and scores it's output
     """
+
     async def solve(state: TaskState, generate: Generate) -> TaskState:
         solution_location = state.metadata.get("variant_metadata", {}).get(
             "solution_location", None

@@ -1,7 +1,4 @@
-from collections import Counter
 from pathlib import Path
-
-import mock
 
 from ctf_evals_core.dataset import (
     SANDBOX_PROVIDER_VAR,
@@ -94,11 +91,9 @@ def test_make_sandbox_spec(monkeypatch):
         "ctf_evals_core.dataset._make_path_absolute", mock_make_path_absolute
     )
 
-    monkeypatch.setattr(
-        "pathlib.Path.is_file", lambda x: True
-    )
+    monkeypatch.setattr("pathlib.Path.is_file", lambda x: True)
 
-    # Test docker sandbox provider is default
+    # Test docker sandbox provider is default
     resolver = _make_sandbox_resolver()
     spec = resolver(Path("tests/test_tree/1"))
     assert spec is not None
@@ -120,15 +115,15 @@ def test_make_sandbox_spec(monkeypatch):
     assert spec is not None
     assert spec == "dummy"
 
-
-
     monkeypatch.setenv(SANDBOX_SPEC_VAR, "dummy.yaml")
     resolver = _make_sandbox_resolver()
 
     spec = resolver(Path("tests/test_tree/1"))
     assert spec is not None
     assert spec[0] == "dummy", "Sandbox provider should be dummy"
-    assert str(spec[1]) == "tests/test_tree/1/dummy.yaml", "Spec file should be dummy.yaml"
+    assert (
+        str(spec[1]) == "tests/test_tree/1/dummy.yaml"
+    ), "Spec file should be dummy.yaml"
 
     # If spec file can't be found resolver should return None
     monkeypatch.setattr("pathlib.Path.is_file", lambda x: False)

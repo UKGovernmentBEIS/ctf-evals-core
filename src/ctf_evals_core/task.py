@@ -1,4 +1,3 @@
-from pathlib import Path
 from typing import Any
 
 import yaml
@@ -49,13 +48,14 @@ def ctf_task(
     params = parse_sample_filters(metadata_filters)
     dataset = filter_dataset_by_metadata(dataset, params)
 
-    # Check that we have challenges
+    # Check that we have challenges
     assert dataset and len(dataset) > 0, "No challenges found."
     return Task(
         dataset=dataset,
         plan=default_agent(max_attempts=max_attempts),
         scorer=includes(),
     )
+
 
 def parse_sample_filters(args: str | tuple[str] | list[str] | None) -> dict[str, Any]:
     """

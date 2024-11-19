@@ -70,9 +70,7 @@ class ChallengeImagePlan(ImagePlan):
             challenge_dir.is_dir()
         ), f"Invalid context: {v}, should be in a challenge folder"
         challengeyaml = challenge_dir / "challenge.yaml"
-        assert (
-            challengeyaml.exists()
-        ), f"Invalid context: {v}, should be in a challenge folder containing a challenge.yaml file" # noqa
+        assert challengeyaml.exists(), f"Invalid context: {v}, should be in a challenge folder containing a challenge.yaml file"  # noqa
         return v
 
     @override
@@ -92,7 +90,6 @@ class ChallengeImagePlan(ImagePlan):
 
 
 class CommonImagePlan(ImagePlan):
-
     @field_validator("context")
     @classmethod
     def validate_context(cls, v):
@@ -102,9 +99,7 @@ class CommonImagePlan(ImagePlan):
         ), f"Invalid context: {v}, should be in images folder"
         maybe_challenge_dir = v.parent.parent
         challengeyaml = maybe_challenge_dir / "challenge.yaml"
-        assert (
-            not challengeyaml.exists()
-        ), f"Invalid context: {v}, should be in a top level images folder not a challenge folder"  # noqa
+        assert not challengeyaml.exists(), f"Invalid context: {v}, should be in a top level images folder not a challenge folder"  # noqa
         return v
 
     @override
@@ -119,7 +114,6 @@ class CommonImagePlan(ImagePlan):
 
 
 class EvalsCoreImagePlan(ImagePlan):
-
     @field_validator("context")
     @classmethod
     def validate_context(cls, v):
@@ -128,11 +122,11 @@ class EvalsCoreImagePlan(ImagePlan):
             v.parent.name == "images"
         ), f"Invalid context: {v}, should be in images folder"
         core_dir = v.parent.parent
-        assert core_dir.name == "ctf_evals_core", f"Invalid context: {v}, should be in the ctf_evals_core folder"  # noqa
-        challengeyaml = core_dir / "challenge.yaml"
         assert (
-            not challengeyaml.exists()
-        ), f"Invalid context: {v}, should be in a top level images folder not a challenge folder"  # noqa
+            core_dir.name == "ctf_evals_core"
+        ), f"Invalid context: {v}, should be in the ctf_evals_core folder"  # noqa
+        challengeyaml = core_dir / "challenge.yaml"
+        assert not challengeyaml.exists(), f"Invalid context: {v}, should be in a top level images folder not a challenge folder"  # noqa
         return v
 
     @override

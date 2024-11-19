@@ -47,7 +47,9 @@ def test_image_name_generation(
     dockerfile_path: str, expected_name: str, image_type: ImagePlan, monkeypatch
 ):
     monkeypatch.setattr("pathlib.Path.is_dir", lambda _: True)
-    monkeypatch.setattr("pathlib.Path.exists", lambda _: image_type == ChallengeImagePlan)
+    monkeypatch.setattr(
+        "pathlib.Path.exists", lambda _: image_type == ChallengeImagePlan
+    )
     plan = image_type.from_dockerfile_path(dockerfile_path)
     name = plan.get_image_name()
     assert name == expected_name, f"Expected {expected_name}, got {name}"
@@ -100,7 +102,9 @@ NOT_CHALLENFES_FOLDER = "not a challenge folder"
         ),
     ],
 )
-def test_invalid_image_names(dockerfile_path: str, image_type: ImagePlan, message: str, monkeypatch):
+def test_invalid_image_names(
+    dockerfile_path: str, image_type: ImagePlan, message: str, monkeypatch
+):
     """Invalid images should raise an AssertionError.
 
     We expect dockerfile paths for plans to be:
