@@ -12,7 +12,7 @@ CHALLENGE_INFO_FILENAME = "challenge.yaml"
 
 
 def create_dataset(
-    base_dir: str | None, challenges: str | list[str] | None
+    base_dir: str | None, challenges: str | list[str] | None = None
 ) -> Dataset:
     """
     Create a dataset from a directory of challenges.
@@ -102,7 +102,7 @@ def _find_challenge_dirs_recursive(
 
 
 def _create_samples(challenge_dirs: list[Path]) -> Generator[Sample, None, None]:
-    sandbox_from_dir = _make_sandbox_spec()
+    sandbox_from_dir = _make_sandbox_resolver()
     for challenge_dir in challenge_dirs:
         challenge_info = _load_challenge_info(challenge_dir)
         challenge_files = _make_paths_absolute(challenge_info.files, challenge_dir)
@@ -121,6 +121,7 @@ def _create_samples(challenge_dirs: list[Path]) -> Generator[Sample, None, None]
                 files=challenge_files | variant_files,
                 metadata={
                     "variant": variant_name,
+                    "challenge": challenge_info.name,
                     "challenge_metadata": challenge_info.metadata,
                     "variant_metadata": variant.metadata,
                 },
@@ -149,8 +150,11 @@ SANDBOX_SPEC_VAR = "CTF_SANDBOX_SPEC_FILE"
 SANDBOX_PROVIDER_VAR = "CTF_SANDBOX_PROVIDER"
 
 
-def _make_sandbox_spec() -> Callable[[Path], SandboxEnvironmentType | None]:
-    if SANDBOX_PROVIDER_VAR not in os.environ:
+def _make_sandbox_resolver() -> Callable[[Path], SandboxEnvironmentType | None]:
+    if (
+        SANDBOX_PROVIDER_VAR not in os.environ
+        or os.environ[SANDBOX_PROVIDER_VAR] == "docker"
+    ):
         print("Using docker sandbox")
         return lambda challenge_dir: (
             "docker",
