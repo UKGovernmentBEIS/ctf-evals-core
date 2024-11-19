@@ -85,3 +85,13 @@ These tests:
 - Verify that docker images listed in compose.yaml would all be discovered by the cli images build command
 - Verify flags are correctly formatted
 - Verify agent image matches our kali linux image
+
+
+# Advanced
+
+## Configuring sandbox environments
+
+Inspect provides a default docker sandbox provider and ctf_evals will use docker by default looking for a docker compose file next to your challenge.yaml file for each challenge. If you have an alternative sandbox provider you would like to use you may set the following environment varables
+
+- CTF_SANDBOX_PROVIDER the name of the provider as given to inspect. For example to use the (podman example)[https://inspect.ai-safety-institute.org.uk/extensions.html#sec-sandbox-environment-extensions] from the inspect docs you would use "podman"
+- CTF_SANDBOX_SPEC_FILE the name of the configuration file for the environment relative to each challenge.yaml files. For docker this is implicitly `compose.yaml` for the podman example this would be `config.yaml`
