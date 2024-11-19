@@ -8,26 +8,10 @@ package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.11"
-inspect-ai = {git = "https://github.com/UKGovernmentBEIS/inspect_ai.git"}
-boto3 = "^1.34.51"
-pyyaml = "^6.0.1"
-ijson = "^3.3.0"
-# ctf_evals_core = { git = "https://github.com/UKGovernmentBEIS/ctf-evals-core.git" }
 ctf_evals_core = { path = "..", develop = true }
 
 [tool.poetry.group.dev.dependencies]
-mypy = "^1.9.0"
-pre-commit = "^3.6.2"
 pytest = "^8.1.1"
-ruff = "^0.6.0"
-types-pyyaml = "^6.0.12.20240311"
-pytest-asyncio = "^0.23.7"
-anthropic = ">=0.30.1"
-google-cloud-aiplatform = "^1.46.0"
-google-generativeai = "^0.4.1"
-mistralai = "^0.1.8"
-openai = "^1.50.0"
-transformers = "^4.39.3"
 
 [tool.ruff.lint]
 select = ["E",   # pycodestyle errors

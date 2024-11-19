@@ -27,21 +27,25 @@ def build_images():
     "--challenge_prefix",
     envvar="CTF_EVALS_ECR_CHALLENGE_PREFIX",
     help="The path prefix to add to images specific to the current folder",
+    show_envvar=True,
 )
 @click.option(
     "--subdomain",
     envvar="CTF_EVALS_ECR_SUBDOMAIN",
     help="The subdomain in the ECR host in which to place image repoistories",
+    show_envvar=True,
 )
 @click.option(
     "--registry_id",
     envvar="CTF_EVALS_ECR_REGISTRY_ID",
     help="The ID of the registry in which to place image repositories",
+    show_envvar=True,
 )
 @click.option(
     "--region",
     envvar="CTF_EVALS_ECR_REGION",
     help="The AWS region in which the ECR is located",
+    show_envvar=True,
 )
 def list_images(challenge_prefix: str, subdomain: str, registry_id: str, region: str):
     all_images = get_images()
@@ -90,24 +94,28 @@ def list_images(challenge_prefix: str, subdomain: str, registry_id: str, region:
     required=True,
     envvar="CTF_EVALS_ECR_CHALLENGE_PREFIX",
     help="The path prefix to add to images specific to the current folder",
+    show_envvar=True,
 )
 @click.option(
     "--subdomain",
     required=True,
     envvar="CTF_EVALS_ECR_SUBDOMAIN",
     help="The subdomain in the ECR host in which to place image repoistories",
+    show_envvar=True,
 )
 @click.option(
     "--registry_id",
     required=True,
     envvar="CTF_EVALS_ECR_REGISTRY_ID",
     help="The ID of the registry in which to place image repositories",
+    show_envvar=True,
 )
 @click.option(
     "--region",
     required=True,
     envvar="CTF_EVALS_ECR_REGION",
     help="The AWS region in which the ECR is located",
+    show_envvar=True,
 )
 def push_images(
     tag: str, challenge_prefix: str, subdomain: str, registry_id: str, region: str
@@ -137,24 +145,28 @@ def push_images(
     required=True,
     envvar="CTF_EVALS_ECR_CHALLENGE_PREFIX",
     help="The path prefix to add to images specific to the current folder",
+    show_envvar=True,
 )
 @click.option(
     "--subdomain",
     required=True,
     envvar="CTF_EVALS_ECR_SUBDOMAIN",
     help="The subdomain in the ECR host in which to place image repoistories",
+    show_envvar=True,
 )
 @click.option(
     "--registry_id",
     required=True,
     envvar="CTF_EVALS_ECR_REGISTRY_ID",
     help="The ID of the registry in which to place image repositories",
+    show_envvar=True,
 )
 @click.option(
     "--region",
     required=True,
     envvar="CTF_EVALS_ECR_REGION",
     help="The AWS region in which the ECR is located",
+    show_envvar=True,
 )
 def push_image(
     tag: str,
@@ -191,24 +203,28 @@ def push_image(
     required=True,
     envvar="CTF_EVALS_ECR_CHALLENGE_PREFIX",
     help="The path prefix to add to images specific to the current folder",
+    show_envvar=True,
 )
 @click.option(
     "--subdomain",
     required=True,
     envvar="CTF_EVALS_ECR_SUBDOMAIN",
     help="The subdomain in the ECR host in which to place image repoistories",
+    show_envvar=True,
 )
 @click.option(
     "--registry_id",
     required=True,
     envvar="CTF_EVALS_ECR_REGISTRY_ID",
     help="The ID of the registry in which to place image repositories",
+    show_envvar=True,
 )
 @click.option(
     "--region",
     required=True,
     envvar="CTF_EVALS_ECR_REGION",
     help="The AWS region in which the ECR is located",
+    show_envvar=True,
 )
 def search_images(
     image: str, challenge_prefix: str, subdomain: str, registry_id: str, region: str

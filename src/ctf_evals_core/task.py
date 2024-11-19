@@ -28,7 +28,6 @@ def ctf_task(
           the base directory. If None, all challenges are loaded.
         variants (str | list[str] | None): The variant or list of variants to include
           (e.g. "easy" or "easy,hard"). If None, all variants are included.
-        agent (Solver | None): The solver to use. If None, the default solver is used.
         metadata_filters (list[str] | None): A list of metadata filters to apply to the
             challenges.
         max_attempts (int): The maximum number of submission attempts before
