@@ -14,6 +14,7 @@ class ImagePlan(pydantic.BaseModel):
 
     The context field should be a path to the directory containing the Dockerfile.
     """
+
     context: Path
 
     @field_validator("context")
@@ -68,6 +69,7 @@ class ChallengeImagePlan(ImagePlan):
     should be of the form challenge_folder/images/service_folder. where the challenge
     folder contains a challenge.yaml file.
     """
+
     @field_validator("context")
     @classmethod
     def validate_context(cls, v):
@@ -163,6 +165,7 @@ class EvalsCoreImagePlan(ImagePlan):
         assert re.match(regex, image_name), f"Invalid image name: {image_name}"
         return image_name
 
+
 def get_images(root_dir: Path | None = None) -> list[ImagePlan]:
     """Discovers all images in the given root directory.
 
@@ -184,6 +187,7 @@ class Registry(pydantic.BaseModel):
     Used to push images to the registry and keep track of the subdomain in which to
     push images.
     """
+
     # Id of the registry in the form of 123456789012
     registry_id: str
     # subdomain of the registry of the form cyber-ctf
@@ -275,7 +279,7 @@ class Registry(pydantic.BaseModel):
     def _check_tag_exists(self, image: ImagePlan, tag: str):
         return tag in self.get_image_tags(image)
 
-    def _get_full_image_name(self, image: ImagePlan):
+    def get_full_image_name(self, image: ImagePlan):
         return f"{self.registry()}/{self.get_image_repository(image)}"
 
     def push_image(self, image: ImagePlan, tag: str):
@@ -287,7 +291,7 @@ class Registry(pydantic.BaseModel):
         self._maybe_create_repository(image)
         # 2. Build image with local naming then tag with full ecr name
         image.build_image()
-        image_name = f"{self._get_full_image_name(image)}:{tag}"
+        image_name = f"{self.get_full_image_name(image)}:{tag}"
         image.tag(image_name)
         # 3. Push the image
         returncode = subprocess.check_call(
@@ -297,6 +301,7 @@ class Registry(pydantic.BaseModel):
             print(f"Failed to push image {tag}")
             return False
         return True
+
 
 def _discover_challenge_dockerfiles(root_dir: Path) -> list[ChallengeImagePlan]:
     results = glob(f"{root_dir}/challenges/**/Dockerfile", recursive=True)

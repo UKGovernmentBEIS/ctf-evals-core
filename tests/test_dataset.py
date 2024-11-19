@@ -87,9 +87,7 @@ def test_make_sandbox_spec(monkeypatch):
         print("hit")
         return base_path / path
 
-    monkeypatch.setattr(
-        "ctf_evals_core.dataset._make_path_absolute", mock_make_path_absolute
-    )
+    monkeypatch.setattr("ctf_evals_core.dataset._resolve_path", mock_make_path_absolute)
 
     monkeypatch.setattr("pathlib.Path.is_file", lambda x: True)
 
