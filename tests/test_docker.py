@@ -1,7 +1,6 @@
 from collections import Counter
 from pathlib import Path
 
-import mock
 import pytest
 from pydantic import ValidationError
 
@@ -45,15 +44,13 @@ def test_list_images():
     ],
 )
 def test_image_name_generation(
-    dockerfile_path: str, expected_name: str, image_type: ImagePlan
+    dockerfile_path: str, expected_name: str, image_type: ImagePlan, monkeypatch
 ):
-    with mock.patch("pathlib.Path.is_dir", return_value=True):
-        with mock.patch(
-            "pathlib.Path.exists", return_value=image_type == ChallengeImagePlan # noqa
-        ):
-            plan = image_type.from_dockerfile_path(dockerfile_path)
-            name = plan.get_image_name()
-            assert name == expected_name, f"Expected {expected_name}, got {name}"
+    monkeypatch.setattr("pathlib.Path.is_dir", lambda _: True)
+    monkeypatch.setattr("pathlib.Path.exists", lambda _: image_type == ChallengeImagePlan)
+    plan = image_type.from_dockerfile_path(dockerfile_path)
+    name = plan.get_image_name()
+    assert name == expected_name, f"Expected {expected_name}, got {name}"
 
 
 SHOULD_BE_IN_IMAGES_MESSAGE = "should be in images folder"
@@ -103,7 +100,7 @@ NOT_CHALLENFES_FOLDER = "not a challenge folder"
         ),
     ],
 )
-def test_invalid_image_names(dockerfile_path: str, image_type: ImagePlan, message: str):
+def test_invalid_image_names(dockerfile_path: str, image_type: ImagePlan, message: str, monkeypatch):
     """Invalid images should raise an AssertionError.
 
     We expect dockerfile paths for plans to be:
@@ -112,8 +109,8 @@ def test_invalid_image_names(dockerfile_path: str, image_type: ImagePlan, messag
     CommonImagePlan: images/somefoldername/Dockerfile
     All non matching names should raise an AssertionError.
     """
+    monkeypatch.setattr("pathlib.Path.is_dir", lambda _: True)
+    monkeypatch.setattr("pathlib.Path.exists", lambda _: True)
     with pytest.raises(ValidationError, match=message):
-        with mock.patch("pathlib.Path.is_dir", return_value=True):
-            with mock.patch("pathlib.Path.exists", return_value=True):
-                plan = image_type.from_dockerfile_path(dockerfile_path)
-                _ = plan.get_image_name()
+        plan = image_type.from_dockerfile_path(dockerfile_path)
+        _ = plan.get_image_name()
