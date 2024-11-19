@@ -11,16 +11,36 @@ from .model import ChallengeInfo
 CHALLENGE_INFO_FILENAME = "challenge.yaml"
 
 
-def create_dataset(challenge_dirs: list[Path]) -> Dataset:
+def create_dataset(
+    base_dir: str | None, challenges: str | list[str] | None
+) -> Dataset:
     """
-    Create a dataset from a list of challenge directories.
+    Create a dataset from a directory of challenges.
 
     Args:
-        challenge_dirs (list[Path]): A list of directories to recursively search for
-          challenges in. A challenge is considered to be a directory containing a
-          `challenge.yaml` file.
+        base_dir (str | None): The path to the directory containing the
+            challenges to load. If None, the path "challenges" is used relative to cwd.
+        challenges: (str | list[str] | None): An optional list of subdirectories within
+            the challenges directory to load. If None, all challenges are loaded
     """
-    challenge_dirs = list(_find_challenge_dirs_recursive(challenge_dirs))
+    if base_dir is None:
+        challenges_path = Path.cwd() / "challenges"
+    else:
+        challenges_path = Path(base_dir)
+
+    def _make_absolute(path: str) -> Path:
+        return challenges_path / path
+
+    def get_challenge_dir_paths() -> list[Path]:
+        # If no challenges are specified, use the default challenge directory.
+        if challenges is None:
+            return [challenges_path]
+        if isinstance(challenges, str):
+            return [_make_absolute(challenges)]
+        return [_make_absolute(x) for x in challenges]
+
+    challenge_dir_paths = get_challenge_dir_paths()
+    challenge_dirs = list(_find_challenge_dirs_recursive(challenge_dir_paths))
     return MemoryDataset(samples=list(_create_samples(challenge_dirs)))
 
 
@@ -51,6 +71,7 @@ def filter_dataset_by_metadata(dataset: Dataset, filters: dict[str, Any]) -> Dat
         filters (dict[str, Any]): A dictionary of metadata filters to apply to the
             dataset. Only samples with metadata matching the filters are included.
     """
+
     def get_key_from_metadata(metadata, key) -> Any:
         # Prefer variant metadata over challenge metadata over typical metadata.
         variant_metadata = metadata.get("variant_metadata", {})

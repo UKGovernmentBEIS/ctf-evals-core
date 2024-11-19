@@ -4,9 +4,6 @@ from typing import Any
 import yaml
 from inspect_ai import Task, task
 from inspect_ai.scorer import includes
-from inspect_ai.solver import (
-    Solver,
-)
 
 from ._solvers.basic_agent import default_agent
 from .dataset import (
@@ -20,10 +17,8 @@ from .dataset import (
 def ctf_task(
     challenges: str | list[str] | None = None,
     variants: str | list[str] | None = None,
-    agent: Solver | None = None,
     metadata_filters: list[str] | None = None,
     max_attempts: int = 3,
-    max_messages: int | None = None,
     challenges_dir: str | None = None,
 ) -> Task:
     """Create a task for CTF challenges.
@@ -43,62 +38,9 @@ def ctf_task(
         challenges_dir (str | None): The default challenge directory to use to discover
             challenges
     """
-    return make_ctf_task(
-        challenges=challenges,
-        variants=variants,
-        agent=agent,
-        metadata_filters=metadata_filters,
-        max_attempts=max_attempts,
-        max_messages=max_messages,
-        challenges_dir=challenges_dir,
-    )
+    dataset = create_dataset(base_dir=challenges_dir, challenges=challenges)
 
-
-def make_ctf_task(
-    challenges: str | list[str] | None = None,
-    variants: str | list[str] | None = None,
-    agent: Solver | None = None,
-    metadata_filters: list[str] | None = None,
-    max_attempts: int = 3,
-    max_messages: int | None = None,
-    challenges_dir: str | None = None,
-) -> Task:
-    """
-    Create a task for a directory of challenges.
-
-    Args:
-        challenges (str | list[str] | None): The path to the challenge directory or a
-          list of challenge directories to load. Relative paths are resolved relative to
-          the challenges directory. If None, all challenges are loaded from
-          default_challenge_dir or the folder challenges relative to the calling file.
-        variants (str | list[str] | None): The variant or list of variants to include
-          (e.g. "easy" or "easy,hard"). If None, all variants are included.
-        agent (Solver | None): The solver to use. If None, the default solver is used.
-        metadata_filters (list[str] | None): A list of metadata filters to apply to the
-            challenges.
-        max_attempts (int): The maximum number of submission attempts before
-          terminating. This argument is ignored if `agent` is provided.
-        max_messages (int): The maximum number of messages in the conversation.
-        challenges_dir (str | None): The default challenge directory to use to discover
-            challenges
-    """
-    if challenges_dir is None:
-        challenges_path = Path.cwd() / "challenges"
-    else:
-        challenges_path = Path(challenges_dir)
-
-    def _make_absolute(path: str) -> Path:
-        return challenges_path / path
-
-    def get_challenge_dir_paths() -> list[Path]:
-        # If no challenges are specified, use the default challenge directory.
-        if challenges is None:
-            return [challenges_path]
-        if isinstance(challenges, str):
-            return [_make_absolute(challenges)]
-        return [_make_absolute(x) for x in challenges]
-
-    dataset = create_dataset(get_challenge_dir_paths())
+    # Apply variant filters
     if variants is not None:
         variants_set = {variants} if isinstance(variants, str) else set(variants)
         dataset = filter_dataset_by_variant(dataset, variants_set)
@@ -107,14 +49,13 @@ def make_ctf_task(
     params = parse_sample_filters(metadata_filters)
     dataset = filter_dataset_by_metadata(dataset, params)
 
+    # Check that we have challenges
     assert dataset and len(dataset) > 0, "No challenges found."
     return Task(
         dataset=dataset,
-        plan=agent or default_agent(max_attempts=max_attempts),
+        plan=default_agent(max_attempts=max_attempts),
         scorer=includes(),
-        # max_messages=max_messages,
     )
-
 
 def parse_sample_filters(args: str | tuple[str] | list[str] | None) -> dict[str, Any]:
     """
