@@ -13,7 +13,7 @@ packages = [
 ctf_eval = "ctf_evals_core._cli.main:main"
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = "^3.10"
 pyyaml = "^6.0.1"
 boto3 = "^1.34.51"
 pytest = "^8.1.1"
