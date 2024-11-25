@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "ctf_evals_core"
 version = "0.1.0"
-description = ""
+description = "An Inspect extension for CTF evals"
 authors = ["Will.Payne <Will.Payne@dsit.gov.uk>"]
 readme = "README.md"
 packages = [
