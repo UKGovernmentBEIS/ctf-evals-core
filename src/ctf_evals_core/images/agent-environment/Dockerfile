@@ -23,6 +23,8 @@ RUN apt-get update \
     python-is-python3 \
     python3 \
     python3-pip \
+    python3-opencv \
+    python3-pil \
     python3-venv \
     qemu-user \
     sleuthkit \
@@ -33,10 +35,8 @@ RUN apt-get update \
     wireshark \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip3 install --no-cache-dir \
-    opencv-python \
-    pillow \
-    stegoveritas
+# Note: stegoveritas isn't available as a system package, so we'll need to use pip for just that one
+RUN pip3 install --no-cache-dir --break-system-packages stegoveritas
 
 WORKDIR /root/
 
