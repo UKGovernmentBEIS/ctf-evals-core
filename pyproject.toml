@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "ctf_evals_core"
 version = "0.1.0"
-description = ""
+description = "An Inspect extension for CTF evals"
 authors = ["Will.Payne <Will.Payne@dsit.gov.uk>"]
 readme = "README.md"
 packages = [
@@ -9,16 +9,13 @@ packages = [
   {include = "ctf_evals_tests", from = "src"},
 ]
 
-[tool.poetry.scripts]
-ctf_eval = "ctf_evals_core._cli.main:main"
-
 [tool.poetry.dependencies]
-python = "^3.11"
-pyyaml = "^6.0.1"
-boto3 = "^1.34.51"
-pytest = "^8.1.1"
-ruamel-yaml = "^0.18.6"
+python = "^3.10"
 inspect-ai = "^0.3.47"
+boto3 = "^1.34.51"
+boto3-stubs = "^1.35.62"
+pyyaml = "^6.0.1"
+ruamel-yaml = "^0.18.6"
 click = "^8.1.7"
 
 [tool.poetry.group.dev.dependencies]
@@ -26,7 +23,6 @@ mypy = "^1.9.0"
 pre-commit = "^3.6.2"
 pytest = "^8.1.1"
 ruff = "^0.6.0"
-boto3-stubs = "^1.35.62"
 types-pyyaml = "^6.0.12.20240917"
 
 [tool.ruff.lint]
@@ -43,14 +39,19 @@ ignore = ["E203", "D10", "D203", "D212"]
 [tool.ruff.lint.pydocstyle]
 convention = "google"
 
+# Have pytest only use tests in /tests/
+# Tests in ctf_evals_tests should be ignored as they are not tests of this package but rather tests provided by this package for downstream use
+[tool.pytest.ini_options]
+testpaths = "tests"
+
+# Expose ctf_eval CLI
+[tool.poetry.scripts]
+ctf_eval = "ctf_evals_core._cli.main:main"
+
+# Extend Inspect with the ctf_evals_core plugin
 [tool.poetry.plugins.inspect_ai]
 ctf_evals_core = "ctf_evals_core._registry"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
-
-# Ignore ctf_evals_tests since that's for people to consume not to test
-# this package
-[tool.pytest.ini_options]
-testpaths = "tests"
