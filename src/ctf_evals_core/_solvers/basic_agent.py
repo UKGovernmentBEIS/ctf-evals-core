@@ -26,7 +26,7 @@ def set_message_limit() -> Solver:
 
 
 @solver
-def default_agent(max_attempts: int = 3, command_timeout: int = 180) -> Solver:
+def default_agent(max_attempts: int = 3, command_timeout: int = 300) -> Solver:
     """
     Create a default agent for the challenges.
 
