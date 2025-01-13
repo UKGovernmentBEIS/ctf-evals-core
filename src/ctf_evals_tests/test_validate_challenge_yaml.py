@@ -1,34 +1,13 @@
 import os
-from glob import glob
 from pathlib import Path
 
 import pytest
-from ruamel.yaml import YAML
 from ruamel.yaml.comments import CommentedMap
 
-from ctf_evals_core._util.docker import get_images
+from .utils import comment_contains, discover_challenge_task_modules, load_yaml
 
 
-def _discover_challenge_task_modules() -> list[Path]:
-    results = [
-        Path(result) for result in glob("challenges/**/challenge.yaml", recursive=True)
-    ]
-    assert results, "Failed to discover any challenges for test"
-    return results
-
-
-def load_yaml(file):
-    # Load YAML file using ruamel.yaml
-    try:
-        yaml = YAML()
-        with open(file, "r") as file:
-            data = yaml.load(file)
-        return data
-    except Exception:
-        return None
-
-
-@pytest.mark.parametrize("task_module", _discover_challenge_task_modules())
+@pytest.mark.parametrize("task_module", discover_challenge_task_modules())
 def test_flag_and_flag_format_given_in_metadata(task_module: Path) -> None:
     challenge_data = load_yaml(task_module)
     assert challenge_data, f"Failed to parse task module {task_module}"
@@ -44,13 +23,20 @@ def test_flag_and_flag_format_given_in_metadata(task_module: Path) -> None:
     assert flag_format, f"Failed to find flag_format_hint in metadata for {task_module}"
 
     # Check flag is expected format
-    split = flag_format.split('...')
-    assert len(split) <= 2, f"Flag format hint is not in expected format for {task_module}"
-    assert flag.startswith(split[0]), f"Start of flag does not match format hint for {task_module}"
+    split = flag_format.split("...")
+    assert (
+        len(split) <= 2
+    ), f"Flag format hint is not in expected format for {task_module}"  # noqa
+    assert flag.startswith(
+        split[0]
+    ), f"Start of flag does not match format hint for {task_module}"  # noqa
     if len(split) == 2:
-        assert flag.endswith(split[1]), f"End of flag does not match format hint for {task_module}"
+        assert flag.endswith(
+            split[1]
+        ), f"End of flag does not match format hint for {task_module}"  # noqa
 
-@pytest.mark.parametrize("task_module", _discover_challenge_task_modules())
+
+@pytest.mark.parametrize("task_module", discover_challenge_task_modules())
 def test_files_exist_for_sandbox_copy(task_module: Path) -> None:
     parent_folder = task_module.parent
     assert task_module.is_file(), f"Failed to find task module {task_module}"
@@ -60,19 +46,12 @@ def test_files_exist_for_sandbox_copy(task_module: Path) -> None:
     assert data, f"Failed to parse task module {task_module}"
 
     # Collect files
-    def collect_files(files_map: CommentedMap) -> dict:
+    def collect_files(files_map: CommentedMap) -> dict[str, str]:
         comments = files_map.ca.items
         files = {}
         for key, value in files_map.items():
-            ignore = False
             file_comments = comments.get(key, [])
-            for comment in file_comments:
-                if comment is None:
-                    continue
-                if "pathcheck_ignore" in comment.value:
-                    ignore = True
-                    break
-            if not ignore:
+            if not comment_contains("pathcheck_ignore", file_comments):
                 files[key] = value
             else:
                 print(f"Skipping file {key} due to pathcheck_ignore comment")
@@ -93,52 +72,3 @@ def test_files_exist_for_sandbox_copy(task_module: Path) -> None:
         assert os.path.isfile(
             file_path
         ), f"Failed to find source file {file_path}. Either the path is incorrect or you are missing a # pathcheck_ignore comment in the challenge.yaml file."  # noqa: E501
-
-
-DOCKER_AGENT_IMAGE = "ctf-agent-environment:1.0.0"
-
-
-@pytest.mark.parametrize("task_module", _discover_challenge_task_modules())
-def test_correct_agent_image(task_module: Path) -> None:
-    compose_yaml = task_module.parent / "compose.yaml"
-    data = load_yaml(compose_yaml)
-    if data is None:
-        pytest.skip(f"Failed to parse compose yaml {compose_yaml}")
-        return
-    agent_image = data.get("services", {}).get("default", {}).get("image")
-    assert agent_image, f"Failed to find agent image in compose yaml {compose_yaml}"
-    assert (
-        agent_image == DOCKER_AGENT_IMAGE
-    ), f"Agent image is not {DOCKER_AGENT_IMAGE} in compose yaml {compose_yaml}"
-
-
-@pytest.mark.parametrize("task_module", _discover_challenge_task_modules())
-def test_valid_images(task_module: Path) -> None:
-    available_images = set(
-        [f"{image.get_image_name()}:1.0.0" for image in get_images()]
-    )
-    compose_yaml = task_module.parent / "compose.yaml"
-    data = load_yaml(compose_yaml)
-    if not data:
-        pytest.skip(f"Failed to parse compose yaml {compose_yaml}")
-        return
-    services = data.get("services", CommentedMap())
-    for service in services.keys():
-        service_comments = services[service].ca.items
-        image = services[service].get("image")
-        assert (
-            image
-        ), f"Failed to find image for service {service} in compose yaml {compose_yaml}"
-        image_comments = service_comments.get("image", [])
-        skip_check = False
-        for comment in image_comments:
-            if comment is None:
-                continue
-            if "imagecheck_ignore" in comment.value:
-                skip_check = True
-                break
-        if skip_check:
-            continue
-        assert (
-            image in available_images
-        ), f"Image {image} in {compose_yaml} is not one generated by the build process"

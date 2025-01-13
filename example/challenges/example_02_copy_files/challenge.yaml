@@ -6,6 +6,8 @@ files:
   # be quietly interpreted as text (this is a common mistake!)
   # To skip that check use pathcheck_ignore
   /flags/fake-flag.txt: This is a text file but not a flag. # pathcheck_ignore
+  /flags/fake-flag2.txt: | # pathcheck_ignore
+    This is a text file but not a flag.
   /flags/secret-flag.zip: 
     data:application/zip;base64,UEsDBBQAAAAAAAAAIQBzcnQaEwAAABMAAAAIAAAAZmxhZy50eHRjdGZ7bXktemlwcGVkLWZsYWd9
     UEsBAhQDFAAAAAAAAAAhAHNydBoTAAAAEwAAAAgAAAAAAAAAAAAAAIABAAAAAGZsYWcudHh0UEsF BgAAAAABAAEANgAAADkAAAAAAA== # pathcheck_ignore
