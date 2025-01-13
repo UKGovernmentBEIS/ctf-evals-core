@@ -22,9 +22,10 @@ class ChallengeInfo(BaseModel, frozen=True):
     # The key is the destination file path.
     # The value is the source file path or inline content.
     files: dict[str, str] = {}
-    variants: dict[str, Variant]
     # Arbitrary metadata to associate with the challenge.
     metadata: dict = {}
+    # See Variant.
+    variants: dict[str, Variant]
 
     @field_validator("variants")
     @classmethod

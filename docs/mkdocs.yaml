@@ -1,0 +1,29 @@
+site_name: Inspect CTF Documentation
+repo_url: https://github.com/UKGovernmentBEIS/ctf-evals-core
+edit_uri: edit/main/docs/docs/
+theme:
+  name: material
+  palette:
+    primary: blue grey
+  font:
+    text: Funnel Sans
+  features:
+    - content.action.edit
+  icon:
+    edit: material/pencil
+markdown_extensions:
+  - admonition
+  - pymdownx.superfences
+  - pymdownx.details
+  - attr_list
+  - toc:
+      permalink: true
+  - footnotes
+  - pymdownx.tabbed:
+      alternate_style: true
+plugins:
+  - search
+nav:
+  - "Introduction": index.md
+extra:
+  generator: false
