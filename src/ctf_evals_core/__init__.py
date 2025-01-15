@@ -1,9 +1,9 @@
 from .dataset import create_dataset, filter_dataset_by_variant
 from .model import ChallengeInfo, Variant
-from .task import ctf_task
+from .task import ctf
 
 __all__ = [
-    "ctf_task",
+    "ctf",
     "ChallengeInfo",
     "Variant",
     "create_dataset",

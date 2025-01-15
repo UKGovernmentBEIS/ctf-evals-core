@@ -13,14 +13,14 @@ from .dataset import (
 
 
 @task
-def ctf_task(
+def ctf(
     challenges: str | list[str] | None = None,
     variants: str | list[str] | None = None,
     metadata_filters: list[str] | None = None,
     max_attempts: int = 3,
     base_directory: str | None = None,
 ) -> Task:
-    """Create a task for CTF challenges.
+    """Create an Inspect Task for the CTF challenge(s).
 
     Args:
         challenges (str | list[str] | None): The path to the challenge directory or a
