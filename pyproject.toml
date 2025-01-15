@@ -1,12 +1,11 @@
 [tool.poetry]
-name = "ctf_evals_core"
+name = "inspect_ctf"
 version = "0.1.0"
-description = "An Inspect extension for CTF evals"
-authors = ["Will.Payne <Will.Payne@dsit.gov.uk>"]
+description = "An Inspect extension for Capture the Flag evaluations"
+authors = ["UK AI Safety Institute"]
 readme = "README.md"
 packages = [
-  {include = "ctf_evals_core", from = "src"},
-  {include = "ctf_evals_tests", from = "src"},
+  {include = "inspect_ctf", from = "src"},
 ]
 
 [tool.poetry.dependencies]
@@ -51,6 +50,7 @@ ctf_eval = "ctf_evals_core._cli.main:main"
 # Extend Inspect with the ctf_evals_core plugin
 [tool.poetry.plugins.inspect_ai]
 ctf_evals_core = "ctf_evals_core._registry"
+
 
 [build-system]
 requires = ["poetry-core"]

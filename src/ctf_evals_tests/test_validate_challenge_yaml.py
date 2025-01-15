@@ -6,7 +6,7 @@ import pytest
 from ruamel.yaml import YAML
 from ruamel.yaml.comments import CommentedMap
 
-from ctf_evals_core._util.docker import get_images
+from inspect_ctf._util.docker import get_images
 
 
 def _discover_challenge_task_modules() -> list[Path]:

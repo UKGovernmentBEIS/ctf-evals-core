@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from ctf_evals_core.dataset import (
+from inspect_ctf.dataset import (
     SANDBOX_PROVIDER_VAR,
     SANDBOX_SPEC_VAR,
     _make_sandbox_resolver,

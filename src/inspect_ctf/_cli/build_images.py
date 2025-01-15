@@ -2,7 +2,7 @@ import click
 from rich.console import Console
 from rich.table import Table
 
-from ctf_evals_core._util.docker import Registry, get_images
+from inspect_ctf._util.docker import Registry, get_images
 
 
 @click.group(

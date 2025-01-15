@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from ctf_evals_core._util.docker import (
+from inspect_ctf._util.docker import (
     ChallengeImagePlan,
     CommonImagePlan,
     EvalsCoreImagePlan,
