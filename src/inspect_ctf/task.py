@@ -19,6 +19,7 @@ def ctf(
     metadata_filters: list[str] | None = None,
     max_attempts: int = 3,
     base_directory: str | None = None,
+    name: str | None = "ctf",
 ) -> Task:
     """Create an Inspect Task for the CTF challenge(s).
 
@@ -35,6 +36,7 @@ def ctf(
         max_messages (int): The maximum number of messages in the conversation.
         base_directory (str | None): The default challenge directory to use to discover
             challenges. If None, the current working directory / "challenges" is used.
+        name (str | None): The name of the task. Defaults to "ctf".
     """
     dataset = create_dataset(base_dir=base_directory, challenges=challenges)
 
@@ -53,6 +55,7 @@ def ctf(
         dataset=dataset,
         plan=default_agent(max_attempts=max_attempts),
         scorer=includes(),
+        name=name,
     )
 
 
