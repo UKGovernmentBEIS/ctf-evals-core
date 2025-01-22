@@ -15,7 +15,7 @@ def create_datasets(
     base_dir: str | None,
     challenges: str | list[str] | None = None,
     single_task: bool = False,
-) -> list[Dataset]:
+) -> list[MemoryDataset]:
     """
     Create a dataset from a directory of challenges.
 
@@ -52,7 +52,10 @@ def create_datasets(
     return datasets
 
 
-def filter_dataset_by_variant(dataset: Dataset, variants: set[str]) -> Dataset:
+def filter_dataset_by_variant(
+        dataset: MemoryDataset,
+        variants: set[str],
+    ) -> MemoryDataset:
     """
     Filter a dataset to just samples with a specific variant.
 
@@ -66,7 +69,10 @@ def filter_dataset_by_variant(dataset: Dataset, variants: set[str]) -> Dataset:
     )
 
 
-def filter_dataset_by_metadata(dataset: Dataset, filters: dict[str, Any]) -> Dataset:
+def filter_dataset_by_metadata(
+        dataset: MemoryDataset,
+        filters: dict[str, Any],
+    ) -> MemoryDataset:
     """
     Filter a dataset to just samples which match the given metadata filters.
 
