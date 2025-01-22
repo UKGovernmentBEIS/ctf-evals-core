@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Any, Callable, Generator
 
 import yaml
-from inspect_ai.dataset import Dataset, MemoryDataset, Sample
+from inspect_ai.dataset import MemoryDataset, Sample
 from inspect_ai.util import SandboxEnvironmentType
 
 from .model import ChallengeInfo
@@ -15,6 +15,7 @@ def create_datasets(
     base_dir: str | None,
     challenges: str | list[str] | None = None,
     single_task: bool = False,
+    name: str = "CTF",
 ) -> list[MemoryDataset]:
     """
     Create a dataset from a directory of challenges.
@@ -26,6 +27,7 @@ def create_datasets(
             the challenges directory to load. If None, all challenges are loaded
         single_task (bool): If True, create a single task for all samples. If False,
             create a task for each sample. Defaults to False.
+        name (str): The name of the dataset. Only used when single_task is True.
     """
     default_base_dir = Path.cwd() / "challenges"
     challenges_path = Path(base_dir) if base_dir is not None else default_base_dir
@@ -42,10 +44,18 @@ def create_datasets(
     challenge_dirs = list(_find_challenge_dirs_recursive(challenge_dir_paths))
 
     if single_task:
-        datasets = [MemoryDataset(samples=list(_create_samples(challenge_dirs)))]
+        datasets = [
+            MemoryDataset(
+                samples=list(_create_samples(challenge_dirs)),
+                name=name,
+            )
+        ]
     else:
         datasets = [
-            MemoryDataset(samples=list(_create_samples([challenge_dir])))
+            MemoryDataset(
+                samples=list(_create_samples([challenge_dir])),
+                name=challenge_dir.name,
+            )
             for challenge_dir in challenge_dirs
         ]
 

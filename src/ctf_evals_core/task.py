@@ -64,9 +64,9 @@ def create_ctf_tasks(
             dataset=dataset,
             plan=default_agent(max_attempts=max_attempts),
             scorer=includes(),
-            name=str(i)
+            name=dataset.name,
         )
-        for i, dataset in enumerate(datasets)
+        for dataset in datasets
     ]
 
     return tasks
