@@ -28,6 +28,7 @@ pytest = "^8.1.1"
 ruff = "^0.6.0"
 boto3-stubs = "^1.35.62"
 types-pyyaml = "^6.0.12.20240917"
+pytest-asyncio = "^0.25.2"
 
 [tool.ruff.lint]
 select = ["E",   # pycodestyle errors
