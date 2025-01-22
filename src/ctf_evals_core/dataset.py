@@ -11,11 +11,11 @@ from .model import ChallengeInfo
 CHALLENGE_INFO_FILENAME = "challenge.yaml"
 
 
-def create_dataset(
+def create_datasets(
     base_dir: str | None,
     challenges: str | list[str] | None = None,
     single_task: bool = True,
-) -> Dataset:
+) -> list[Dataset]:
     """
     Create a dataset from a directory of challenges.
 
@@ -38,7 +38,13 @@ def create_dataset(
 
     challenge_dir_paths = get_challenge_dir_paths()
     challenge_dirs = list(_find_challenge_dirs_recursive(challenge_dir_paths))
-    return MemoryDataset(samples=list(_create_samples(challenge_dirs)))
+
+    if single_task:
+        datasets = [MemoryDataset(samples=list(_create_samples(challenge_dirs)))]
+    else:
+        datasets = [MemoryDataset(samples=list(_create_samples([challenge_dir]))) for challenge_dir in challenge_dirs]
+
+    return datasets
 
 
 def filter_dataset_by_variant(dataset: Dataset, variants: set[str]) -> Dataset:

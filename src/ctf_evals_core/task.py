@@ -6,13 +6,13 @@ from inspect_ai.scorer import includes
 
 from ._solvers.basic_agent import default_agent
 from .dataset import (
-    create_dataset,
+    create_datasets,
     filter_dataset_by_metadata,
     filter_dataset_by_variant,
 )
 
 
-def create_ctf(
+def create_ctf_tasks(
     challenges: str | list[str] | None = None,
     variants: str | list[str] | None = None,
     metadata_filters: list[str] | None = None,
@@ -38,24 +38,23 @@ def create_ctf(
         single_task (bool): If True, create a single task for all samples. If False,
             create a task for each sample. Defaults to False.
     """
-    dataset = create_dataset(base_dir=base_directory, challenges=challenges, single_task=single_task)
+    datasets = create_datasets(base_dir=base_directory, challenges=challenges, single_task=single_task)
 
     # Apply variant filters
     if variants is not None:
         variants_set = {variants} if isinstance(variants, str) else set(variants)
-        dataset = filter_dataset_by_variant(dataset, variants_set)
+        datasets = [filter_dataset_by_variant(dataset, variants_set) for dataset in datasets]
 
     # Apply metadata filters
     params = parse_sample_filters(metadata_filters)
-    dataset = filter_dataset_by_metadata(dataset, params)
+    datasets = [filter_dataset_by_metadata(dataset, params) for dataset in datasets]
 
     # Check that we have challenges
-    assert dataset and len(dataset) > 0, "No challenges found."
-    return Task(
-        dataset=dataset,
-        plan=default_agent(max_attempts=max_attempts),
-        scorer=includes(),
-    )
+    assert datasets and len(datasets) > 0, "No challenges found."
+
+    tasks = [Task(dataset=dataset, plan=default_agent(max_attempts=max_attempts), scorer=includes(), name=str(i)) for i, dataset in enumerate(datasets)]
+
+    return tasks
 
 
 @task
@@ -82,7 +81,7 @@ def ctf_task(
         base_directory (str | None): The default challenge directory to use to discover
             challenges. If None, the current working directory / "challenges" is used.
     """
-    return create_ctf(challenges=challenges, variants=variants, metadata_filters=metadata_filters, max_attempts=max_attempts, base_directory=base_directory, single_task=True)[0]
+    return create_ctf_tasks(challenges=challenges, variants=variants, metadata_filters=metadata_filters, max_attempts=max_attempts, base_directory=base_directory, single_task=True)[0]
 
 
 def parse_sample_filters(args: str | tuple[str] | list[str] | None) -> dict[str, Any]:
