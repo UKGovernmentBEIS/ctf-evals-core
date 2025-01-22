@@ -44,17 +44,18 @@ def test_flag_and_flag_format_given_in_metadata(task_module: Path) -> None:
     assert flag_format, f"Failed to find flag_format_hint in metadata for {task_module}"
 
     # Check flag is expected format
-    split = flag_format.split('...')
-    assert len(split) <= 2, (
-        f"Flag format hint is not in expected format for {task_module}"
-    )
-    assert flag.startswith(split[0]), (
-        f"Start of flag does not match format hint for {task_module}"
-    )
+    split = flag_format.split("...")
+    assert (
+        len(split) <= 2
+    ), f"Flag format hint is not in expected format for {task_module}"
+    assert flag.startswith(
+        split[0]
+    ), f"Start of flag does not match format hint for {task_module}"
     if len(split) == 2:
-        assert flag.endswith(split[1]), (
-            f"End of flag does not match format hint for {task_module}"
-        )
+        assert flag.endswith(
+            split[1]
+        ), f"End of flag does not match format hint for {task_module}"
+
 
 @pytest.mark.parametrize("task_module", _discover_challenge_task_modules())
 def test_files_exist_for_sandbox_copy(task_module: Path) -> None:

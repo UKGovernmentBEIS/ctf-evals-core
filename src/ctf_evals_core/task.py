@@ -39,17 +39,14 @@ def create_ctf_tasks(
             create a task for each sample. Defaults to False.
     """
     datasets = create_datasets(
-        base_dir=base_directory,
-        challenges=challenges,
-        single_task=single_task
+        base_dir=base_directory, challenges=challenges, single_task=single_task
     )
 
     # Apply variant filters
     if variants is not None:
         variants_set = {variants} if isinstance(variants, str) else set(variants)
         datasets = [
-            filter_dataset_by_variant(dataset, variants_set)
-            for dataset in datasets
+            filter_dataset_by_variant(dataset, variants_set) for dataset in datasets
         ]
 
     # Apply metadata filters
@@ -102,7 +99,7 @@ def ctf_task(
         metadata_filters=metadata_filters,
         max_attempts=max_attempts,
         base_directory=base_directory,
-        single_task=True
+        single_task=True,
     )[0]
 
 

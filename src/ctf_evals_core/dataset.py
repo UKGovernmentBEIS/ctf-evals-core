@@ -63,9 +63,9 @@ def create_datasets(
 
 
 def filter_dataset_by_variant(
-        dataset: MemoryDataset,
-        variants: set[str],
-    ) -> MemoryDataset:
+    dataset: MemoryDataset,
+    variants: set[str],
+) -> MemoryDataset:
     """
     Filter a dataset to just samples with a specific variant.
 
@@ -80,9 +80,9 @@ def filter_dataset_by_variant(
 
 
 def filter_dataset_by_metadata(
-        dataset: MemoryDataset,
-        filters: dict[str, Any],
-    ) -> MemoryDataset:
+    dataset: MemoryDataset,
+    filters: dict[str, Any],
+) -> MemoryDataset:
     """
     Filter a dataset to just samples which match the given metadata filters.
 
