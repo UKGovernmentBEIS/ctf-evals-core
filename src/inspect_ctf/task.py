@@ -12,33 +12,29 @@ from .dataset import (
 )
 
 
-@task
-def ctf(
+def create_ctf(
+    root_dir: str,
     challenges: str | list[str] | None = None,
     variants: str | list[str] | None = None,
     metadata_filters: list[str] | None = None,
-    max_attempts: int = 3,
-    base_directory: str | None = None,
     name: str | None = "ctf",
-) -> Task:
-    """Create an Inspect Task for the CTF challenge(s).
+    single_task: bool = True,
+) -> list[Task]:
+    """Create an Inspect Task for the given CTF challenge(s).
 
     Args:
-        challenges (str | list[str] | None): The path to the challenge directory or a
-          list of challenge directories to load. Relative paths are resolved relative to
-          the base directory. If None, all challenges are loaded.
-        variants (str | list[str] | None): The variant or list of variants to include
-          (e.g. "easy" or "easy,hard"). If None, all variants are included.
-        metadata_filters (list[str] | None): A list of metadata filters to apply to the
+        root_dir (str): Directory used to discover challenges.
+        challenges (str | list[str] | None): Subdirectories within root_dir to load. If
+            None, all challenges found in root_dir are loaded.
+        variants (str | list[str] | None): Variants to include (e.g. "easy" or
+            "easy,hard"). If None, all variants are included.
+        metadata_filters (list[str] | None): Metadata filters to apply to the
             challenges.
-        max_attempts (int): The maximum number of submission attempts before
-          terminating. This argument is ignored if `agent` is provided.
-        max_messages (int): The maximum number of messages in the conversation.
-        base_directory (str | None): The default challenge directory to use to discover
-            challenges. If None, the current working directory / "challenges" is used.
-        name (str | None): The name of the task. Defaults to "ctf".
+        name (str | None): Name of the task. Defaults to "ctf".
+        single_task (bool): If True, create a single task for all samples. If False,
+            create a task for each sample. Defaults to True.
     """
-    dataset = create_dataset(base_dir=base_directory, challenges=challenges)
+    dataset = create_dataset(root_dir=root_dir, challenges=challenges, single_task=single_task)
 
     # Apply variant filters
     if variants is not None:
@@ -57,6 +53,29 @@ def ctf(
         scorer=includes(),
         name=name,
     )
+
+
+@task
+def ctf(
+    root_dir: str,
+    challenges: str | list[str] | None = None,
+    variants: str | list[str] | None = None,
+    metadata_filters: list[str] | None = None,
+    name: str | None = "ctf",
+) -> Task:
+    """Create an Inspect Task for the given CTF challenge(s).
+
+    Args:
+        root_dir (str): Directory used to discover challenges.
+        challenges (str | list[str] | None): Subdirectories within root_dir to load. If
+            None, all challenges found in root_dir are loaded.
+        variants (str | list[str] | None): Variants to include (e.g. "easy" or
+            "easy,hard"). If None, all variants are included.
+        metadata_filters (list[str] | None): Metadata filters to apply to the
+            challenges.
+        name (str | None): Name of the task. Defaults to "ctf".
+    """
+    return create_ctf(root_dir, challenges, variants, metadata_filters, name, single_task=True)
 
 
 def parse_sample_filters(args: str | tuple[str] | list[str] | None) -> dict[str, Any]:

@@ -11,6 +11,10 @@ from .model import ChallengeInfo
 CHALLENGE_INFO_FILENAME = "challenge.yaml"
 
 
+def create_dataset(root_dir: str, challenges: str | list[str] | None = None, single_task: bool = False) -> list[Dataset]:
+    pass
+
+
 def create_dataset(
     base_dir: str | None, challenges: str | list[str] | None = None
 ) -> Dataset:
