@@ -1,17 +1,18 @@
 [tool.poetry]
-name = "ctf-evals-example"
+name = "ctf-eval-examples"
 version = "0.1.0"
-description = "A template repo for CTF challenges"
-authors = [""]
+description = "Example CTF evaluations implemented using inspect-ctf"
+authors = ["UK AI Safety Institute"]
 readme = "README.md"
 package-mode = false
 
 [tool.poetry.dependencies]
-python = "^3.11"
-ctf_evals_core = { path = "..", develop = true }
-
-[tool.poetry.group.dev.dependencies]
+python = "^3.10"
+inspect-ai = "^0.3.47"
+inspect_ctf = { path = "..", develop = true }
 pytest = "^8.1.1"
+aisitools = {git = "https://github.com/AI-Safety-Institute/aisi-inspect-tools"}
+openai = "^1.59.7"
 
 [tool.ruff.lint]
 select = ["E",   # pycodestyle errors
@@ -31,18 +32,13 @@ convention = "google"
 # The images dir may contain multiple modules with the same name (e.g. server.py).
 exclude = [
   "images",
-  "solve.py",
   "resources",
 ]
 
-[[tool.mypy.overrides]]
-# agent_framework is an optional AISI-internal dependency
-module = "agent_framework.*"
-ignore_missing_imports = true
-
-[build-system]
-requires = ["poetry-core>=1.7.0"]
-build-backend = "poetry.core.masonry.api"
-
 [tool.pytest.ini_options]
 addopts = "--pyargs ctf_evals_tests"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
