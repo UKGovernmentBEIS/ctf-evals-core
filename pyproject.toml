@@ -45,11 +45,11 @@ testpaths = "tests"
 
 # Expose ctf_eval CLI
 [tool.poetry.scripts]
-ctf_eval = "ctf_evals_core._cli.main:main"
+ctf_eval = "inspect_ctf._cli.main:main"
 
-# Extend Inspect with the ctf_evals_core plugin
+# Extend Inspect with the inspect_ctf plugin
 [tool.poetry.plugins.inspect_ai]
-ctf_evals_core = "ctf_evals_core._registry"
+inspect_ctf = "inspect_ctf._registry"
 
 
 [build-system]
