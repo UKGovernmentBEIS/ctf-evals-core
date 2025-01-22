@@ -4,14 +4,14 @@ from ctf_evals_core.dataset import (
     SANDBOX_PROVIDER_VAR,
     SANDBOX_SPEC_VAR,
     _make_sandbox_resolver,
-    create_dataset,
+    create_datasets,
     filter_dataset_by_metadata,
     filter_dataset_by_variant,
 )
 
 
 def test_create_dataset():
-    dataset = create_dataset(base_dir="tests/test_tree")
+    dataset = create_datasets(base_dir="tests/test_tree", single_task=True)[0]
     assert len(dataset) == 4
     assert set([x.id for x in dataset]) == set(
         [
@@ -24,7 +24,7 @@ def test_create_dataset():
 
 
 def test_filter_by_variant():
-    dataset = create_dataset(base_dir="tests/test_tree")
+    dataset = create_datasets(base_dir="tests/test_tree", single_task=True)[0]
     filtered = filter_dataset_by_variant(dataset, {"minimal"})
     assert len(filtered) == 2
     filtered = filter_dataset_by_variant(dataset, set())
@@ -50,7 +50,7 @@ meta = {
 
 
 def test_filter_by_metadata():
-    dataset = create_dataset(base_dir="tests/test_tree")
+    dataset = create_datasets(base_dir="tests/test_tree", single_task=True)[0]
     # We could write the metadata in the dataset but it makes it harder to
     # parse tests so we'll just add it here.
     # It also lets us parameterize this test later if we want to.
