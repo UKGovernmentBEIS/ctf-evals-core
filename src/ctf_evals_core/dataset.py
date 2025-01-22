@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Any, Callable, Generator
 
 import yaml
-from inspect_ai.dataset import Dataset, MemoryDataset, Sample
+from inspect_ai.dataset import MemoryDataset, Sample
 from inspect_ai.util import SandboxEnvironmentType
 
 from .model import ChallengeInfo
@@ -11,9 +11,12 @@ from .model import ChallengeInfo
 CHALLENGE_INFO_FILENAME = "challenge.yaml"
 
 
-def create_dataset(
-    base_dir: str | None, challenges: str | list[str] | None = None
-) -> Dataset:
+def create_datasets(
+    base_dir: str | None,
+    challenges: str | list[str] | None = None,
+    single_task: bool = False,
+    name: str = "CTF",
+) -> list[MemoryDataset]:
     """
     Create a dataset from a directory of challenges.
 
@@ -22,6 +25,9 @@ def create_dataset(
             challenges to load. If None, the path "challenges" is used relative to cwd.
         challenges: (str | list[str] | None): An optional list of subdirectories within
             the challenges directory to load. If None, all challenges are loaded
+        single_task (bool): If True, create a single task for all samples. If False,
+            create a task for each sample. Defaults to False.
+        name (str): The name of the dataset. Only used when single_task is True.
     """
     default_base_dir = Path.cwd() / "challenges"
     challenges_path = Path(base_dir) if base_dir is not None else default_base_dir
@@ -36,10 +42,30 @@ def create_dataset(
 
     challenge_dir_paths = get_challenge_dir_paths()
     challenge_dirs = list(_find_challenge_dirs_recursive(challenge_dir_paths))
-    return MemoryDataset(samples=list(_create_samples(challenge_dirs)))
+
+    if single_task:
+        datasets = [
+            MemoryDataset(
+                samples=list(_create_samples(challenge_dirs)),
+                name=name,
+            )
+        ]
+    else:
+        datasets = [
+            MemoryDataset(
+                samples=list(_create_samples([challenge_dir])),
+                name=challenge_dir.name,
+            )
+            for challenge_dir in challenge_dirs
+        ]
+
+    return datasets
 
 
-def filter_dataset_by_variant(dataset: Dataset, variants: set[str]) -> Dataset:
+def filter_dataset_by_variant(
+    dataset: MemoryDataset,
+    variants: set[str],
+) -> MemoryDataset:
     """
     Filter a dataset to just samples with a specific variant.
 
@@ -53,7 +79,10 @@ def filter_dataset_by_variant(dataset: Dataset, variants: set[str]) -> Dataset:
     )
 
 
-def filter_dataset_by_metadata(dataset: Dataset, filters: dict[str, Any]) -> Dataset:
+def filter_dataset_by_metadata(
+    dataset: MemoryDataset,
+    filters: dict[str, Any],
+) -> MemoryDataset:
     """
     Filter a dataset to just samples which match the given metadata filters.
 

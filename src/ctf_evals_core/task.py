@@ -6,10 +6,67 @@ from inspect_ai.scorer import includes
 
 from ._solvers.basic_agent import default_agent
 from .dataset import (
-    create_dataset,
+    create_datasets,
     filter_dataset_by_metadata,
     filter_dataset_by_variant,
 )
+
+
+def create_ctf_tasks(
+    challenges: str | list[str] | None = None,
+    variants: str | list[str] | None = None,
+    metadata_filters: list[str] | None = None,
+    max_attempts: int = 3,
+    base_directory: str | None = None,
+    single_task: bool = False,
+) -> list[Task]:
+    """Create a task for CTF challenges.
+
+    Args:
+        challenges (str | list[str] | None): The path to the challenge directory or a
+          list of challenge directories to load. Relative paths are resolved relative to
+          the base directory. If None, all challenges are loaded.
+        variants (str | list[str] | None): The variant or list of variants to include
+          (e.g. "easy" or "easy,hard"). If None, all variants are included.
+        metadata_filters (list[str] | None): A list of metadata filters to apply to the
+            challenges.
+        max_attempts (int): The maximum number of submission attempts before
+          terminating. This argument is ignored if `agent` is provided.
+        max_messages (int): The maximum number of messages in the conversation.
+        base_directory (str | None): The default challenge directory to use to discover
+            challenges. If None, the current working directory / "challenges" is used.
+        single_task (bool): If True, create a single task for all samples. If False,
+            create a task for each sample. Defaults to False.
+    """
+    datasets = create_datasets(
+        base_dir=base_directory, challenges=challenges, single_task=single_task
+    )
+
+    # Apply variant filters
+    if variants is not None:
+        variants_set = {variants} if isinstance(variants, str) else set(variants)
+        datasets = [
+            filter_dataset_by_variant(dataset, variants_set) for dataset in datasets
+        ]
+
+    # Apply metadata filters
+    params = parse_sample_filters(metadata_filters)
+    datasets = [filter_dataset_by_metadata(dataset, params) for dataset in datasets]
+
+    # Check that we have challenges
+    assert datasets and len(datasets) > 0, "No challenges found."
+
+    tasks = [
+        Task(
+            dataset=dataset,
+            plan=default_agent(max_attempts=max_attempts),
+            scorer=includes(),
+            name=dataset.name,
+        )
+        for dataset in datasets
+    ]
+
+    return tasks
 
 
 @task
@@ -36,24 +93,14 @@ def ctf_task(
         base_directory (str | None): The default challenge directory to use to discover
             challenges. If None, the current working directory / "challenges" is used.
     """
-    dataset = create_dataset(base_dir=base_directory, challenges=challenges)
-
-    # Apply variant filters
-    if variants is not None:
-        variants_set = {variants} if isinstance(variants, str) else set(variants)
-        dataset = filter_dataset_by_variant(dataset, variants_set)
-
-    # Apply metadata filters
-    params = parse_sample_filters(metadata_filters)
-    dataset = filter_dataset_by_metadata(dataset, params)
-
-    # Check that we have challenges
-    assert dataset and len(dataset) > 0, "No challenges found."
-    return Task(
-        dataset=dataset,
-        plan=default_agent(max_attempts=max_attempts),
-        scorer=includes(),
-    )
+    return create_ctf_tasks(
+        challenges=challenges,
+        variants=variants,
+        metadata_filters=metadata_filters,
+        max_attempts=max_attempts,
+        base_directory=base_directory,
+        single_task=True,
+    )[0]
 
 
 def parse_sample_filters(args: str | tuple[str] | list[str] | None) -> dict[str, Any]:

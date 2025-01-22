@@ -9,6 +9,8 @@ package-mode = false
 [tool.poetry.dependencies]
 python = "^3.11"
 ctf_evals_core = { path = "..", develop = true }
+aisitools = {git = "https://github.com/AI-Safety-Institute/aisi-inspect-tools.git"}
+openai = "^1.60.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.1.1"
