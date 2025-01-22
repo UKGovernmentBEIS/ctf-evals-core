@@ -12,7 +12,9 @@ CHALLENGE_INFO_FILENAME = "challenge.yaml"
 
 
 def create_dataset(
-    base_dir: str | None, challenges: str | list[str] | None = None
+    base_dir: str | None,
+    challenges: str | list[str] | None = None,
+    single_task: bool = True,
 ) -> Dataset:
     """
     Create a dataset from a directory of challenges.
