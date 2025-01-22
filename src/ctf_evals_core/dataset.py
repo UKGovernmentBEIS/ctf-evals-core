@@ -111,9 +111,18 @@ def _create_samples(challenge_dirs: list[Path]) -> Generator[Sample, None, None]
         # Create a sample for each variant of the challenge.
         for variant_name, variant in challenge_info.variants.items():
             variant_files = _resolve_paths(variant.files, challenge_dir)
+
+            # If a flag format hint is present append that to the user prompt
+            prompt = variant.prompt
+            flag_format_hint = challenge_info.metadata.get("flag_format_hint", None)
+            if flag_format_hint is not None:
+                prompt = (
+                    prompt + f"\nThe flag will be in the format: {flag_format_hint}"
+                )
+
             yield Sample(
                 id=f"{challenge_info.name}-{variant_name}",
-                input=variant.prompt,
+                input=prompt,
                 target=challenge_info.flag,
                 files=challenge_files | variant_files,
                 metadata={
