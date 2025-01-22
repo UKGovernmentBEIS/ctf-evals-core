@@ -14,7 +14,7 @@ CHALLENGE_INFO_FILENAME = "challenge.yaml"
 def create_datasets(
     base_dir: str | None,
     challenges: str | list[str] | None = None,
-    single_task: bool = True,
+    single_task: bool = False,
 ) -> list[Dataset]:
     """
     Create a dataset from a directory of challenges.
@@ -24,6 +24,8 @@ def create_datasets(
             challenges to load. If None, the path "challenges" is used relative to cwd.
         challenges: (str | list[str] | None): An optional list of subdirectories within
             the challenges directory to load. If None, all challenges are loaded
+        single_task (bool): If True, create a single task for all samples. If False,
+            create a task for each sample. Defaults to False.
     """
     default_base_dir = Path.cwd() / "challenges"
     challenges_path = Path(base_dir) if base_dir is not None else default_base_dir
@@ -42,7 +44,10 @@ def create_datasets(
     if single_task:
         datasets = [MemoryDataset(samples=list(_create_samples(challenge_dirs)))]
     else:
-        datasets = [MemoryDataset(samples=list(_create_samples([challenge_dir]))) for challenge_dir in challenge_dirs]
+        datasets = [
+            MemoryDataset(samples=list(_create_samples([challenge_dir])))
+            for challenge_dir in challenge_dirs
+        ]
 
     return datasets
 

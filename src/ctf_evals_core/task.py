@@ -38,12 +38,19 @@ def create_ctf_tasks(
         single_task (bool): If True, create a single task for all samples. If False,
             create a task for each sample. Defaults to False.
     """
-    datasets = create_datasets(base_dir=base_directory, challenges=challenges, single_task=single_task)
+    datasets = create_datasets(
+        base_dir=base_directory,
+        challenges=challenges,
+        single_task=single_task
+    )
 
     # Apply variant filters
     if variants is not None:
         variants_set = {variants} if isinstance(variants, str) else set(variants)
-        datasets = [filter_dataset_by_variant(dataset, variants_set) for dataset in datasets]
+        datasets = [
+            filter_dataset_by_variant(dataset, variants_set)
+            for dataset in datasets
+        ]
 
     # Apply metadata filters
     params = parse_sample_filters(metadata_filters)
@@ -52,7 +59,15 @@ def create_ctf_tasks(
     # Check that we have challenges
     assert datasets and len(datasets) > 0, "No challenges found."
 
-    tasks = [Task(dataset=dataset, plan=default_agent(max_attempts=max_attempts), scorer=includes(), name=str(i)) for i, dataset in enumerate(datasets)]
+    tasks = [
+        Task(
+            dataset=dataset,
+            plan=default_agent(max_attempts=max_attempts),
+            scorer=includes(),
+            name=str(i)
+        )
+        for i, dataset in enumerate(datasets)
+    ]
 
     return tasks
 
@@ -81,7 +96,14 @@ def ctf_task(
         base_directory (str | None): The default challenge directory to use to discover
             challenges. If None, the current working directory / "challenges" is used.
     """
-    return create_ctf_tasks(challenges=challenges, variants=variants, metadata_filters=metadata_filters, max_attempts=max_attempts, base_directory=base_directory, single_task=True)[0]
+    return create_ctf_tasks(
+        challenges=challenges,
+        variants=variants,
+        metadata_filters=metadata_filters,
+        max_attempts=max_attempts,
+        base_directory=base_directory,
+        single_task=True
+    )[0]
 
 
 def parse_sample_filters(args: str | tuple[str] | list[str] | None) -> dict[str, Any]:
