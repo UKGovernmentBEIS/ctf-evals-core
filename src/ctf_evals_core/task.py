@@ -18,7 +18,7 @@ def create_ctf(
     metadata_filters: list[str] | None = None,
     max_attempts: int = 3,
     base_directory: str | None = None,
-    single_task: bool = True,
+    single_task: bool = False,
 ) -> list[Task]:
     """Create a task for CTF challenges.
 
@@ -36,7 +36,7 @@ def create_ctf(
         base_directory (str | None): The default challenge directory to use to discover
             challenges. If None, the current working directory / "challenges" is used.
         single_task (bool): If True, create a single task for all samples. If False,
-            create a task for each sample. Defaults to True.
+            create a task for each sample. Defaults to False.
     """
     dataset = create_dataset(base_dir=base_directory, challenges=challenges, single_task=single_task)
 
@@ -65,7 +65,6 @@ def ctf_task(
     metadata_filters: list[str] | None = None,
     max_attempts: int = 3,
     base_directory: str | None = None,
-    single_task: bool = True,
 ) -> Task:
     """Create a task for CTF challenges.
 
@@ -82,10 +81,8 @@ def ctf_task(
         max_messages (int): The maximum number of messages in the conversation.
         base_directory (str | None): The default challenge directory to use to discover
             challenges. If None, the current working directory / "challenges" is used.
-        single_task (bool): If True, create a single task for all samples. If False,
-            create a task for each sample. Defaults to True.
     """
-    return create_ctf(challenges=challenges, variants=variants, metadata_filters=metadata_filters, max_attempts=max_attempts, base_directory=base_directory, single_task=single_task)
+    return create_ctf(challenges=challenges, variants=variants, metadata_filters=metadata_filters, max_attempts=max_attempts, base_directory=base_directory, single_task=True)[0]
 
 
 def parse_sample_filters(args: str | tuple[str] | list[str] | None) -> dict[str, Any]:
