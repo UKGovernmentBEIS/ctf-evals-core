@@ -1,5 +1,5 @@
-from inspect_ai.model import ModelOutput
 import pytest
+from inspect_ai.model import ModelOutput
 from inspect_ai.scorer import Target
 from inspect_ai.solver import TaskState
 

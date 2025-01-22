@@ -1,6 +1,5 @@
 import re
 
-from inspect_ai.model import ChatMessageAssistant
 from inspect_ai.scorer import (
     CORRECT,
     INCORRECT,
