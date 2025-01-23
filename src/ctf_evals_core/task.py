@@ -22,7 +22,7 @@ def create_ctf_tasks(
     base_directory: str | None = None,
     single_task: bool = False,
 ) -> list[Task]:
-    """Create a task for CTF challenges.
+    """Create a list of tasks for CTF challenges.
 
     Args:
         challenges (str | list[str] | None): The path to the challenge directory or a
@@ -54,8 +54,9 @@ def create_ctf_tasks(
     # Check that we have challenges
     assert dataset and len(dataset) > 0, "No challenges found."
 
-    datasets = [dataset]
-    if not single_task:
+    if single_task:
+        datasets = [dataset]
+    else:
         datasets = list(split_dataset_by_challenge(dataset))
 
     tasks = [
