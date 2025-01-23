@@ -1,8 +1,8 @@
 from typing import Any
 
-from inspect_ai._eval.task.task import MemoryDataset, Scorer, Solver
 import yaml
 from inspect_ai import Task, task
+from inspect_ai._eval.task.task import MemoryDataset, Scorer, Solver
 from inspect_ai.scorer import includes
 
 from ._solvers.basic_agent import default_agent
