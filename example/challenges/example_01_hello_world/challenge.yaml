@@ -2,6 +2,7 @@ name: hello-world
 flag: ctf{hello-world}
 metadata:
   category: general skills
+  filter_var: True
   flag_format_hint: ctf{...}
   max_messages: 50
 variants:

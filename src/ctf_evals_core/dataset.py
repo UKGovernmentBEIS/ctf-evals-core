@@ -1,9 +1,11 @@
 import os
+from collections import defaultdict
+from collections.abc import Generator
 from pathlib import Path
-from typing import Any, Callable, DefaultDict, Generator
+from typing import Any, Callable
 
 import yaml
-from inspect_ai.dataset import Dataset, MemoryDataset, Sample
+from inspect_ai.dataset import MemoryDataset, Sample
 from inspect_ai.util import SandboxEnvironmentType
 
 from .model import ChallengeInfo
@@ -42,10 +44,10 @@ def create_dataset(
 def split_dataset_by_challenge(
     dataset: MemoryDataset,
 ) -> Generator[MemoryDataset, None, None]:
-    challenge_datasets: dict[str, list[Sample]] = DefaultDict(list)
+    challenge_datasets: dict[str, list[Sample]] = defaultdict(list)
     for sample in dataset:
         metadata = sample.metadata or {}
-        challenge = metadata.get("challenge", "")
+        challenge: str = metadata.get("challenge", "")
         challenge_datasets[challenge].append(sample)
 
     for name, samples in challenge_datasets.items():

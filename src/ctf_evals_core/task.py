@@ -55,18 +55,17 @@ def create_ctf_tasks(
 
     datasets = [dataset]
     if not single_task:
-        split_dataset_by_challenge(dataset)
+        datasets = list(split_dataset_by_challenge(dataset))
 
-    if single_task:
-        tasks = [
-            Task(
-                dataset=dataset,
-                plan=default_agent(max_attempts=max_attempts),
-                scorer=includes(),
-                name=dataset.name,
-            )
-            for dataset in datasets
-        ]
+    tasks = [
+        Task(
+            dataset=dataset,
+            plan=default_agent(max_attempts=max_attempts),
+            scorer=includes(),
+            name=dataset.name,
+        )
+        for dataset in datasets
+    ]
 
     return tasks
 
