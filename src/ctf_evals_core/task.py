@@ -1,6 +1,6 @@
 from typing import Any
 
-from inspect_ai._eval.task.task import MemoryDataset
+from inspect_ai._eval.task.task import MemoryDataset, Scorer, Solver
 import yaml
 from inspect_ai import Task, task
 from inspect_ai.scorer import includes
@@ -66,16 +66,22 @@ def create_ctf_tasks(
     return tasks
 
 
-def create_ctf_task_from_dataset(dataset: MemoryDataset, max_attempts: int = 3):
+def create_ctf_task_from_dataset(
+    dataset: MemoryDataset,
+    plan: Solver | None = None,
+    max_attempts: int = 3,
+    scorer: Scorer | None = None,
+    name: str | None = None,
+):
     """Creates a ctf task from a given dataset using our defaults.
 
     For use with custom dataset filtering
     """
     return Task(
         dataset=dataset,
-        plan=default_agent(max_attempts=max_attempts),
-        scorer=includes(),
-        name=dataset.name,
+        plan=plan or default_agent(max_attempts=max_attempts),
+        scorer=scorer or includes(),
+        name=name or dataset.name,
     )
 
 
