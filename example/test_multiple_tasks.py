@@ -4,7 +4,6 @@ from inspect_ai import eval_set
 challenges = ""
 variants = ["solution", "minimal"]
 metadata_filters = None
-# metadata_filters=["filter_var=True"] # should only get the hello world task
 single_task = False
 
 tasks = create_ctf_tasks(
