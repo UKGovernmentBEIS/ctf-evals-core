@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import Any, Callable, Generator
+from typing import Any, Callable, DefaultDict, Generator
 
 import yaml
 from inspect_ai.dataset import Dataset, MemoryDataset, Sample
@@ -13,7 +13,7 @@ CHALLENGE_INFO_FILENAME = "challenge.yaml"
 
 def create_dataset(
     base_dir: str | None, challenges: str | list[str] | None = None
-) -> Dataset:
+) -> MemoryDataset:
     """
     Create a dataset from a directory of challenges.
 
@@ -39,7 +39,22 @@ def create_dataset(
     return MemoryDataset(samples=list(_create_samples(challenge_dirs)))
 
 
-def filter_dataset_by_variant(dataset: Dataset, variants: set[str]) -> Dataset:
+def split_dataset_by_challenge(
+    dataset: MemoryDataset,
+) -> Generator[MemoryDataset, None, None]:
+    challenge_datasets: dict[str, list[Sample]] = DefaultDict(list)
+    for sample in dataset:
+        metadata = sample.metadata or {}
+        challenge = metadata.get("challenge", "")
+        challenge_datasets[challenge].append(sample)
+
+    for name, samples in challenge_datasets.items():
+        yield MemoryDataset(name=name, samples=samples)
+
+
+def filter_dataset_by_variant(
+    dataset: MemoryDataset, variants: set[str]
+) -> MemoryDataset:
     """
     Filter a dataset to just samples with a specific variant.
 
@@ -53,7 +68,9 @@ def filter_dataset_by_variant(dataset: Dataset, variants: set[str]) -> Dataset:
     )
 
 
-def filter_dataset_by_metadata(dataset: Dataset, filters: dict[str, Any]) -> Dataset:
+def filter_dataset_by_metadata(
+    dataset: MemoryDataset, filters: dict[str, Any]
+) -> MemoryDataset:
     """
     Filter a dataset to just samples which match the given metadata filters.
 
