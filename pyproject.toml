@@ -23,6 +23,7 @@ pre-commit = "^3.6.2"
 pytest = "^8.1.1"
 ruff = "^0.6.0"
 types-pyyaml = "^6.0.12.20240917"
+pytest-asyncio = "^0.25.2"
 
 [tool.ruff.lint]
 select = ["E",   # pycodestyle errors
