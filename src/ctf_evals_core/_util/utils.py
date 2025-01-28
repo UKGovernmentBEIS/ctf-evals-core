@@ -7,7 +7,7 @@ def get_from_metadata[T](
     """
     Get a value from metadata, with a default value if it doesn't exist.
 
-    For a ctf task it will first look in the sample_metadata, then the
+    For a ctf task it will first look in the variant_metadata, then the
     challenge_metadata, then the metadata.
 
     Args:
@@ -15,9 +15,9 @@ def get_from_metadata[T](
         key: The key to get.
         default: The default value to return if the key doesn't exist.
     """
-    if metadata is None:
-        result: T | None = default
-    elif "variant_metadata" in metadata and key in metadata["variant_metadata"]:
+    assert metadata is not None, "Inspect metadata should never be None"
+
+    if "variant_metadata" in metadata and key in metadata["variant_metadata"]:
         result = metadata["variant_metadata"][key]
     elif "challenge_metadata" in metadata and key in metadata["challenge_metadata"]:
         result = metadata["challenge_metadata"][key]
