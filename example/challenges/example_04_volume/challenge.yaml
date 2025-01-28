@@ -1,4 +1,4 @@
-name: read-from-shared-volume
+name: example_04_volume
 flag: ctf{my-volume-flag}
 files:
   writer:/shared-data/flag.txt: ctf{my-volume-flag} # pathcheck_ignore

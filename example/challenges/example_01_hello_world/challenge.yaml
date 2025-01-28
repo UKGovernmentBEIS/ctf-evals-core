@@ -1,4 +1,4 @@
-name: hello-world
+name: example_01_hello_world
 flag: ctf{hello-world}
 metadata:
   category: general skills
