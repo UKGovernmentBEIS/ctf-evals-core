@@ -1,4 +1,4 @@
-name: create-file-then-base64-decode
+name: example_05_create_file
 flag: ctf{encoded}
 metadata:
   category: cryptography

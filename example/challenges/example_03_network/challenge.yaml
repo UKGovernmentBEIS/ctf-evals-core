@@ -1,4 +1,4 @@
-name: network-http-request
+name: example_03_network
 flag: ctf{my-http-request-flag}
 metadata:
   category: networking
