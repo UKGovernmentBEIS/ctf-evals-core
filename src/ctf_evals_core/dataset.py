@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 import yaml
+from ._util.utils import get_from_metadata
 from inspect_ai.dataset import MemoryDataset, Sample
 from inspect_ai.util import SandboxEnvironmentType
 
@@ -84,21 +85,10 @@ def filter_dataset_by_metadata(
         filters (dict[str, Any]): A dictionary of metadata filters to apply to the
             dataset. Only samples with metadata matching the filters are included.
     """
-
-    def get_key_from_metadata(metadata, key) -> Any:
-        variant_metadata = metadata.get("variant_metadata", {})
-        challenge_metadata = metadata.get("challenge_metadata", {})
-        # Prefer variant metadata over challenge metadata over typical metadata
-        # using defaults
-        value = variant_metadata.get(
-            key, challenge_metadata.get(key, metadata.get(key, None))
-        )
-        return value
-
     def predicate(sample: Sample) -> bool:
         # All filters must be satisfied
         return all(
-            get_key_from_metadata(sample.metadata, key) == value
+            get_from_metadata(metadata=sample.metadata, key=key) == value
             for key, value in filters.items()
         )
 
