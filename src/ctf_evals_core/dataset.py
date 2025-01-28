@@ -5,10 +5,10 @@ from pathlib import Path
 from typing import Any, Callable
 
 import yaml
-from ._util.utils import get_from_metadata
 from inspect_ai.dataset import MemoryDataset, Sample
 from inspect_ai.util import SandboxEnvironmentType
 
+from ._util.utils import get_from_metadata
 from .model import ChallengeInfo
 
 CHALLENGE_INFO_FILENAME = "challenge.yaml"
@@ -85,6 +85,7 @@ def filter_dataset_by_metadata(
         filters (dict[str, Any]): A dictionary of metadata filters to apply to the
             dataset. Only samples with metadata matching the filters are included.
     """
+
     def predicate(sample: Sample) -> bool:
         # All filters must be satisfied
         return all(

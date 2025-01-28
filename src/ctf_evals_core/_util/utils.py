@@ -1,7 +1,9 @@
 from typing import Any
 
 
-def get_from_metadata[T](metadata: dict[str, Any], key: str, default: T = None) -> T:
+def get_from_metadata[T](
+    metadata: dict[str, Any] | None, key: str, default: T | None = None
+) -> T | None:
     """
     Get a value from metadata, with a default value if it doesn't exist.
 
