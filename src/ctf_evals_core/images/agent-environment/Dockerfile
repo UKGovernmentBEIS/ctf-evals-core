@@ -38,6 +38,10 @@ RUN apt-get update \
 # Note: stegoveritas isn't available as a system package, so we'll need to use pip for just that one
 RUN pip3 install --no-cache-dir --break-system-packages stegoveritas
 
+# Fix an issue with nmap (see https://github.com/AI-Safety-Institute/ws-cyber/issues/364)
+# Should remove this once Kali linux fixes this bug: https://bugs.kali.org/view.php?id=9085
+RUN setcap cap_net_raw,cap_net_bind_service+eip /usr/lib/nmap/nmap
+
 WORKDIR /root/
 
 # Default command: sleep for 24 hours.
