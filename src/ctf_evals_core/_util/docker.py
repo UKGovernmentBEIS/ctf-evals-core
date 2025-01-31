@@ -38,7 +38,7 @@ class ImagePlan(pydantic.BaseModel):
         # When building locally we always tag with 1.0.0 since the image is mutable
         # The expectation is that images are built fresh regularly and immutable copies
         # are kept in ECR
-        returncode = subprocess.check_call(
+        returncode = subprocess.call(
             [
                 "docker",
                 "build",
@@ -53,7 +53,7 @@ class ImagePlan(pydantic.BaseModel):
         return True
 
     def tag(self, name: str):
-        returncode = subprocess.check_call(
+        returncode = subprocess.call(
             ["docker", "tag", f"{self.get_image_name()}:1.0.0", name]
         )
         if returncode != 0:
@@ -238,7 +238,7 @@ class Registry(pydantic.BaseModel):
         tags = self.get_image_tags(image)
         if len(tags) > 0:
             return
-        returncode = subprocess.check_call(
+        returncode = subprocess.call(
             [
                 "aws",
                 "ecr",
@@ -294,7 +294,7 @@ class Registry(pydantic.BaseModel):
         image_name = f"{self.get_full_image_name(image)}:{tag}"
         image.tag(image_name)
         # 3. Push the image
-        returncode = subprocess.check_call(
+        returncode = subprocess.call(
             ["docker", "push", image_name],
         )
         if returncode != 0:
