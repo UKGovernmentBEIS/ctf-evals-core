@@ -24,6 +24,14 @@ class ImagePlan(pydantic.BaseModel):
         return v
 
     @classmethod
+    def try_from_dockerfile_path(cls, path: str):
+        try:
+            return cls.from_dockerfile_path(path)
+        except Exception as e:
+            print(e)
+            return None
+
+    @classmethod
     def from_dockerfile_path(cls, path: str):
         assert Path(path).name == "Dockerfile", "Invalid dockerfile path"
         return cls(context=Path(path).parent)
@@ -38,7 +46,7 @@ class ImagePlan(pydantic.BaseModel):
         # When building locally we always tag with 1.0.0 since the image is mutable
         # The expectation is that images are built fresh regularly and immutable copies
         # are kept in ECR
-        returncode = subprocess.check_call(
+        returncode = subprocess.call(
             [
                 "docker",
                 "build",
@@ -53,7 +61,7 @@ class ImagePlan(pydantic.BaseModel):
         return True
 
     def tag(self, name: str):
-        returncode = subprocess.check_call(
+        returncode = subprocess.call(
             ["docker", "tag", f"{self.get_image_name()}:1.0.0", name]
         )
         if returncode != 0:
@@ -238,7 +246,7 @@ class Registry(pydantic.BaseModel):
         tags = self.get_image_tags(image)
         if len(tags) > 0:
             return
-        returncode = subprocess.check_call(
+        returncode = subprocess.call(
             [
                 "aws",
                 "ecr",
@@ -253,8 +261,7 @@ class Registry(pydantic.BaseModel):
             stdout=subprocess.DEVNULL,
         )
         if returncode != 0:
-            print(f"Failed to create repository {
-                  self.get_image_repository(image)}")
+            print(f"Failed to create repository {self.get_image_repository(image)}")
             return False
         return True
 
@@ -294,7 +301,7 @@ class Registry(pydantic.BaseModel):
         image_name = f"{self.get_full_image_name(image)}:{tag}"
         image.tag(image_name)
         # 3. Push the image
-        returncode = subprocess.check_call(
+        returncode = subprocess.call(
             ["docker", "push", image_name],
         )
         if returncode != 0:
@@ -305,9 +312,14 @@ class Registry(pydantic.BaseModel):
 
 def _discover_challenge_dockerfiles(root_dir: Path) -> list[ChallengeImagePlan]:
     results = glob(f"{root_dir}/challenges/**/Dockerfile", recursive=True)
-    # Parent because docker expects the folder containing the Dockerfile
+    # Use try_from_dockerfile_path to catch any Dockerfiles that don't match the
+    # expected format then filter those out
     image_plans = [
-        ChallengeImagePlan.from_dockerfile_path(result) for result in results
+        plan
+        for plan in [
+            ChallengeImagePlan.try_from_dockerfile_path(result) for result in results
+        ]
+        if plan is not None
     ]
     return image_plans
 
@@ -315,8 +327,15 @@ def _discover_challenge_dockerfiles(root_dir: Path) -> list[ChallengeImagePlan]:
 # Discovers a generic image in the cwd/images folder
 def _discover_common_images(root_dir: Path) -> list[CommonImagePlan]:
     results = glob(f"{root_dir}/images/**/Dockerfile", recursive=True)
-    # Parent because docker expects the folder containing the Dockerfile
-    image_plans = [CommonImagePlan.from_dockerfile_path(result) for result in results]
+    # Use try_from_dockerfile_path to catch any Dockerfiles that don't match the
+    # expected format then filter those out
+    image_plans = [
+        plan
+        for plan in [
+            CommonImagePlan.try_from_dockerfile_path(result) for result in results
+        ]
+        if plan is not None
+    ]
     return image_plans
 
 
@@ -335,7 +354,13 @@ def _discover_evals_core_images() -> list[EvalsCoreImagePlan]:
     images = _get_core_root() / "images"
     images = images.resolve()
     results = glob(f"{images}/**/Dockerfile", recursive=True)
+    # Use try_from_dockerfile_path to catch any Dockerfiles that don't match the
+    # expected format then filter those out
     image_plans = [
-        EvalsCoreImagePlan.from_dockerfile_path(result) for result in results
+        plan
+        for plan in [
+            EvalsCoreImagePlan.try_from_dockerfile_path(result) for result in results
+        ]
+        if plan is not None
     ]
     return image_plans
