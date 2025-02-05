@@ -24,7 +24,7 @@ class ImagePlan(pydantic.BaseModel):
         return v
 
     @classmethod
-    def try_from_dockerfile_path(cls, path: str):
+    def try_from_dockerfile_path_or_none(cls, path: str):
         try:
             return cls.from_dockerfile_path(path)
         except Exception as e:
@@ -90,7 +90,9 @@ class ChallengeImagePlan(ImagePlan):
             challenge_dir.is_dir()
         ), f"Invalid context: {v}, should be in a challenge folder"
         challengeyaml = challenge_dir / "challenge.yaml"
-        assert challengeyaml.exists(), f"Invalid context: {v}, should be in a challenge folder containing a challenge.yaml file"  # noqa
+        assert challengeyaml.exists(), (
+            f"Invalid context: {v}, should be in a challenge folder containing a challenge.yaml file"  # noqa
+        )
         return v
 
     @override
@@ -125,7 +127,9 @@ class CommonImagePlan(ImagePlan):
         ), f"Invalid context: {v}, should be in images folder"
         maybe_challenge_dir = v.parent.parent
         challengeyaml = maybe_challenge_dir / "challenge.yaml"
-        assert not challengeyaml.exists(), f"Invalid context: {v}, should be in a top level images folder not a challenge folder"  # noqa
+        assert not challengeyaml.exists(), (
+            f"Invalid context: {v}, should be in a top level images folder not a challenge folder"  # noqa
+        )
         return v
 
     @override
@@ -158,7 +162,9 @@ class EvalsCoreImagePlan(ImagePlan):
             core_dir.name == "ctf_evals_core"
         ), f"Invalid context: {v}, should be in the ctf_evals_core folder"  # noqa
         challengeyaml = core_dir / "challenge.yaml"
-        assert not challengeyaml.exists(), f"Invalid context: {v}, should be in a top level images folder not a challenge folder"  # noqa
+        assert not challengeyaml.exists(), (
+            f"Invalid context: {v}, should be in a top level images folder not a challenge folder"  # noqa
+        )
         return v
 
     @override
@@ -314,28 +320,21 @@ def _discover_challenge_dockerfiles(root_dir: Path) -> list[ChallengeImagePlan]:
     results = glob(f"{root_dir}/challenges/**/Dockerfile", recursive=True)
     # Use try_from_dockerfile_path to catch any Dockerfiles that don't match the
     # expected format then filter those out
-    image_plans = [
-        plan
-        for plan in [
-            ChallengeImagePlan.try_from_dockerfile_path(result) for result in results
-        ]
-        if plan is not None
+    option_plans = [
+        ChallengeImagePlan.try_from_dockerfile_path_or_none(result)
+        for result in results
     ]
+    image_plans = [plan for plan in option_plans if plan is not None]
     return image_plans
 
 
 # Discovers a generic image in the cwd/images folder
 def _discover_common_images(root_dir: Path) -> list[CommonImagePlan]:
     results = glob(f"{root_dir}/images/**/Dockerfile", recursive=True)
-    # Use try_from_dockerfile_path to catch any Dockerfiles that don't match the
-    # expected format then filter those out
-    image_plans = [
-        plan
-        for plan in [
-            CommonImagePlan.try_from_dockerfile_path(result) for result in results
-        ]
-        if plan is not None
+    option_plans = [
+        CommonImagePlan.try_from_dockerfile_path_or_none(result) for result in results
     ]
+    image_plans = [plan for plan in option_plans if plan is not None]
     return image_plans
 
 
@@ -354,13 +353,9 @@ def _discover_evals_core_images() -> list[EvalsCoreImagePlan]:
     images = _get_core_root() / "images"
     images = images.resolve()
     results = glob(f"{images}/**/Dockerfile", recursive=True)
-    # Use try_from_dockerfile_path to catch any Dockerfiles that don't match the
-    # expected format then filter those out
-    image_plans = [
-        plan
-        for plan in [
-            EvalsCoreImagePlan.try_from_dockerfile_path(result) for result in results
-        ]
-        if plan is not None
+    option_plans = [
+        EvalsCoreImagePlan.try_from_dockerfile_path_or_none(result)
+        for result in results
     ]
+    image_plans = [plan for plan in option_plans if plan is not None]
     return image_plans
