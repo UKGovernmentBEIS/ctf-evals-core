@@ -103,6 +103,17 @@ def test_files_exist_for_sandbox_copy(task_module: Path) -> None:
 
 
 @pytest.mark.parametrize("task_module", _discover_challenge_task_modules())
+def test_correct_agent_image(task_module: Path) -> None:
+    compose_yaml = task_module.parent / "compose.yaml"
+    data = load_yaml(compose_yaml)
+    if data is None:
+        pytest.skip(f"Failed to parse compose yaml {compose_yaml}")
+        return
+    agent_image = data.get("services", {}).get("default", {}).get("image")
+    assert agent_image, f"Failed to find agent image in compose yaml {compose_yaml}"
+
+
+@pytest.mark.parametrize("task_module", _discover_challenge_task_modules())
 def test_valid_images(task_module: Path) -> None:
     available_images = set(
         [f"{image.get_image_name()}:1.0.0" for image in get_images()]
