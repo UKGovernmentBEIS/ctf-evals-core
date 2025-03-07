@@ -25,7 +25,7 @@ properties:
   flag:
     type: string
     description: The flag that solves the challenge
-    pattern: ^.*{.*}$
+    pattern: ^[^{}]+{[^{}]+}$
   files:
     type: object
     description: Files to be deployed with the challenge
@@ -37,7 +37,7 @@ properties:
       flag_format_hint:
         type: string
         description: Hint about the flag format
-        pattern: ^.*{\.\.\.}$
+        pattern: ^[^{}]+{\.\.\.}$
   variants:
     type: object
     required:
