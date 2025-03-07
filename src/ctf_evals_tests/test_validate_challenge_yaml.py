@@ -88,7 +88,7 @@ def test_valid_challenge_yaml_schema(task_module: Path) -> None:
     try:
         validate(challenge_data, challenge_schema)
     except ValidationError as e:
-        error_path = ".".join(e.path) if e.path else "root"
+        error_path = ".".join(str(p) for p in e.path) if e.path else "root"
         error_message = f"""
 Validation error in "{task_module}":
 Path: {error_path}
