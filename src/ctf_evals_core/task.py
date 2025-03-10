@@ -5,13 +5,13 @@ from inspect_ai import Task, task
 from inspect_ai._eval.task.task import MemoryDataset, Scorer, Solver
 from inspect_ai.scorer import includes
 
-from ._solvers.basic_agent import default_agent
 from .dataset import (
     create_dataset,
     filter_dataset_by_metadata,
     filter_dataset_by_variant,
     split_dataset_by_challenge,
 )
+from .solvers.basic_agent import default_agent
 
 
 def create_ctf_tasks(
