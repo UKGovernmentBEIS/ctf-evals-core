@@ -4,7 +4,7 @@ from inspect_ai.util import sandbox
 
 
 @solver("qa")
-def qa_solver() -> Solver:
+def qa_solver(print_solution_output=True) -> Solver:
     """A solver for doing QA on challenges.
 
     This solver expects a solution.sh script in the challenge directory.
@@ -15,7 +15,6 @@ def qa_solver() -> Solver:
         solution_location = state.metadata.get("variant_metadata", {}).get(
             "solution_location", None
         )
-        print(solution_location)
         if solution_location is None:  # use relative path
             exec_result = await sandbox().exec(
                 ["bash", "-c", "chmod +x *.sh && ./solution.sh"]
@@ -41,7 +40,8 @@ def qa_solver() -> Solver:
         formatted_message = ModelOutput.from_content(
             "dummy", f"```\n{exec_result.stdout}\n{exec_result.stderr}\n```"
         ).message
-        print(formatted_message.content)
+        if print_solution_output:
+            print(formatted_message.content)
         state.messages.append(formatted_message)
         return state
 
