@@ -35,12 +35,17 @@ RUN apt-get update \
     wireshark \
     && rm -rf /var/lib/apt/lists/*
 
+# Fix an issue with nmap (see https://github.com/AI-Safety-Institute/ws-cyber/issues/364)
+RUN setcap cap_net_raw,cap_net_bind_service+eip /usr/lib/nmap/nmap
+
 # Note: stegoveritas isn't available as a system package, so we'll need to use pip for just that one
 RUN pip3 install --no-cache-dir --break-system-packages stegoveritas
 
-# Fix an issue with nmap (see https://github.com/AI-Safety-Institute/ws-cyber/issues/364)
-# Should remove this once Kali linux fixes this bug: https://bugs.kali.org/view.php?id=9085
-RUN setcap cap_net_raw,cap_net_bind_service+eip /usr/lib/nmap/nmap
+# Install inspect tool support in a venv to support bash_session
+RUN python -m venv /opt/inspect_tool_support && \
+    /opt/inspect_tool_support/bin/pip install inspect-tool-support && \
+    /opt/inspect_tool_support/bin/inspect-tool-support post-install --no-web-browser
+ENV PATH="$PATH:/opt/inspect_tool_support/bin"
 
 WORKDIR /root/
 
