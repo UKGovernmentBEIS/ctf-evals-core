@@ -2,8 +2,13 @@ from typing import Any
 
 
 def get_from_metadata[T](
-    metadata: dict[str, Any] | None, key: str, default: T | None = None
-) -> T | None:
+    metadata: dict[str, Any] | None,
+    key: str,
+    default: T = None,  # type: ignore
+) -> T | Any:
+    # mypy wants default to be T | None because of no implicit optional but if so
+    # people who call get_from_metadata with a default variable set get a value of
+    # type T | None which is not correct
     """
     Get a value from metadata, with a default value if it doesn't exist.
 
