@@ -2,7 +2,7 @@
 # Use the command below to target a new release
 # docker pull kalilinux/kali-last-release
 # docker inspect -f '{{json .RepoDigests}}' kalilinux/kali-last-release | jq -r '.[0]'
-FROM kalilinux/kali-last-release@sha256:92935ba0b1053dc765e627edb65d1981341b662ccaea99271f5ab40e387483a1
+FROM kalilinux/kali-last-release@sha256:99d99f1c1349a5e1fa8f862875ad204ffc009599e2a6c4ed617d16f6d5bae241
 
 # Avoid prompts during package installation.
 ARG DEBIAN_FRONTEND=noninteractive
