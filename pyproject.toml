@@ -5,8 +5,8 @@ description = ""
 authors = ["Will.Payne <Will.Payne@dsit.gov.uk>"]
 readme = "README.md"
 packages = [
-  {include = "ctf_evals_core", from = "src"},
-  {include = "ctf_evals_tests", from = "src"},
+  { include = "ctf_evals_core", from = "src" },
+  { include = "ctf_evals_tests", from = "src" },
 ]
 
 [tool.poetry.scripts]
@@ -18,7 +18,7 @@ pyyaml = "^6.0.1"
 boto3 = "^1.34.51"
 pytest = "^8.1.1"
 ruamel-yaml = "^0.18.6"
-inspect-ai = ">=0.3.47"
+inspect-ai = ">=0.3.75"
 click = "^8.1.7"
 jsonschema = "^4.23.0"
 types-jsonschema = "^4.23.0.20241208"
@@ -33,14 +33,15 @@ types-pyyaml = "^6.0.12.20240917"
 pytest-asyncio = "^0.25.2"
 
 [tool.ruff.lint]
-select = ["E",   # pycodestyle errors
-          "W",   # pycodestyle warnings
-          "F",   # flake8
-          "D",   # pydocstyle
-          "I",   # isort
-          # "RET", # flake8-return
-          # "RUF", # ruff rules
-        ]
+select = [
+  "E", # pycodestyle errors
+  "W", # pycodestyle warnings
+  "F", # flake8
+  "D", # pydocstyle
+  "I", # isort
+  # "RET", # flake8-return
+  # "RUF", # ruff rules
+]
 ignore = [
   "E203", # whitespace before punctuations
   "D10",

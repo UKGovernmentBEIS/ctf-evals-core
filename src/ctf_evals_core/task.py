@@ -3,6 +3,7 @@ from typing import Any
 import yaml
 from inspect_ai import Task, task
 from inspect_ai._eval.task.task import MemoryDataset, Scorer, Solver
+from inspect_ai.model import Model
 from inspect_ai.scorer import includes
 
 from .dataset import (
@@ -21,6 +22,8 @@ def create_ctf_tasks(
     max_attempts: int = 3,
     base_directory: str | None = None,
     single_task: bool = False,
+    model: str | Model | None = None,
+    solver: Solver | None = None,
 ) -> list[Task]:
     """Create a list of tasks for CTF challenges.
 
@@ -39,6 +42,9 @@ def create_ctf_tasks(
             challenges. If None, the current working directory / "challenges" is used.
         single_task (bool): If True, create a single task for all samples. If False,
             create a task for each sample. Defaults to False.
+        model (str | Model | None): Model to create tasks with. If None, defaults to eval model.
+        solver (Solver | None): Solver to create tasks with. If None, default agent is used.
+
     """
     dataset = create_dataset(base_dir=base_directory, challenges=challenges)
 
@@ -60,7 +66,9 @@ def create_ctf_tasks(
         datasets = list(split_dataset_by_challenge(dataset))
 
     tasks = [
-        create_ctf_task_from_dataset(dataset, max_attempts=max_attempts)
+        create_ctf_task_from_dataset(
+            dataset, max_attempts=max_attempts, model=model, plan=solver
+        )
         for dataset in datasets
     ]
 
@@ -73,6 +81,7 @@ def create_ctf_task_from_dataset(
     max_attempts: int = 3,
     scorer: Scorer | None = None,
     name: str | None = None,
+    model: str | Model | None = None,
 ):
     """Creates a ctf task from a given dataset using our defaults.
 
@@ -83,6 +92,7 @@ def create_ctf_task_from_dataset(
         plan=plan or default_agent(max_attempts=max_attempts),
         scorer=scorer or includes(),
         name=name or dataset.name,
+        model=model,
     )
 
 
